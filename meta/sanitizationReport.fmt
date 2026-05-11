@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Record fieldDelimiter="|" name="sanitizationReport" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field label="Sandbox" name="sandbox" type="string"/>
+<Field label="File" name="file_url" type="string"/>
+<Field label="File Name" name="file_name" type="string"/>
+<Field label="Type" name="type" type="string"/>
+<Field label="Name" name="name" type="string"/>
+<Field label="Redacted Properties" name="redacted_properties" type="string"/>
+<Field label="Status" name="status" type="string"/>
+<Field label="Message" name="message" type="string"/>
+</Record>

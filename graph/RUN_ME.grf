@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="NickTaylor" created="Fri Oct 10 10:19:36 CEST 2025" guiVersion="7.3.1.25" id="1760106628698" licenseCode="CLCDSCLOVE24765514SP" name="chooseSandbox" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/sanitizationReport.fmt" id="Metadata0"/>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="|" name="triggerRename" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field name="triggerRename" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata2">
+<Record fieldDelimiter="|" name="unexportedFiles" previewAttachment="${DATATMP_DIR}/unexportedFiles.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" recordDelimiter="\r\n" skipSourceRows="0" type="delimited">
+<Field name="sandbox" type="string"/>
+<Field name="fileURL" type="string"/>
+<Field name="fileName" type="string"/>
+<Field eofAsDelimiter="true" name="fileSize" type="long"/>
+<Field name="note" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata3">
+<Record fieldDelimiter="|" name="unexportedFilesHeaders" previewAttachment="${DATATMP_DIR}/unexportedFiles.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" recordDelimiter="\r\n" skipSourceRows="0" type="delimited">
+<Field name="sandbox" type="string"/>
+<Field name="fileURL" type="string"/>
+<Field name="fileName" type="string"/>
+<Field eofAsDelimiter="true" name="fileSize" type="string"/>
+</Record>
+</Metadata>
+<GraphParameters>
+<GraphParameter defaultHint="sandbox names, comma delimited" name="INCLUDE" public="true" required="true">
+<attr name="description"><![CDATA[The list of ONLY the sandboxes you wish to include, separated by commas.
+Leave blank to default to all sandboxes and use EXCLUDE to remove specific ones. ]]></attr>
+</GraphParameter>
+<GraphParameter defaultHint="sandbox names, comma delimited" name="EXCLUDE" public="true" required="true">
+<attr name="description"><![CDATA[The list of sandbox names you wish to exclude, comma separated.
+If INCLUDE is not blank, this parameter will be ignored.]]></attr>
+</GraphParameter>
+<GraphParameter name="SANDBOXES_DIR">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	string root = getParamValue("SANDBOX_ROOT");
+	integer rootIndex = lastIndexOf(root,"/");
+	root = left(root,rootIndex);
+	
+	
+	return root;
+}
+]]></attr>
+</GraphParameter>
+<GraphParameter name="ENABLE_INCLUDED">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	if (getParamValue("INCLUDE") == "" or getParamValue("INCLUDE") == null) {return "false";}
+	else return "true";
+}
+]]></attr>
+</GraphParameter>
+<GraphParameter name="ENABLE_EXCLUDED">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	if (getParamValue("INCLUDE") == "" or getParamValue("INCLUDE") == null) {return "true";}
+	else return "false";
+}
+]]></attr>
+</GraphParameter>
+<GraphParameter name="TIMESTAMP">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	return date2str(today(),"yyyyMMddhhmmss");
+}
+]]></attr>
+</GraphParameter>
+<GraphParameter defaultHint="default true" name="REDACTED_MODE" public="false" required="false">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	if (getParamValue("EXPORT_MODE")=="redacted"){return "true";}
+	else {return "false";}
+}
+]]></attr>
+<SingleType name="string"/>
+</GraphParameter>
+<GraphParameter defaultHint="default true" name="ONLY_CLOVER_FILES" public="false" required="false">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	if (getParamValue("EXPORT_MODE") == "unredacted_clover_files"){return "true";}
+	else {return "false";}
+}
+]]></attr>
+<attr name="description"><![CDATA[ONLY FOR UNREDACTED MODE
+If "true" only clover files (.grf,.jbf,.etc.) will be exported.
+Other files (.csv,.json, etc.) will be ignored.
+If "false" all files in sandbox will be exported. ]]></attr>
+<SingleType name="string"/>
+</GraphParameter>
+<GraphParameter defaultHint="default false" name="INCLUDE_LARGE_FILES" public="false" required="false">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	
+	if (getParamValue("EXPORT_MODE") == "unredacted_large_files"){return "true";}
+	else {return "false";}
+}
+]]></attr>
+<attr name="description"><![CDATA[ONLY FOR UNREDACTED MODE
+Large files can take a long time to export
+By default files over 100mb will not be exported.
+If this parameter is "true" all files will be exported
+regardless of size.]]></attr>
+<SingleType name="string"/>
+</GraphParameter>
+<GraphParameter category="advanced" label="Number of executors" name="SANDBOX_EXECUTORS" public="true" required="false" value="10">
+<ComponentReference referencedComponent="EXPORT_SANDBOX1" referencedProperty="executorsNumber"/>
+</GraphParameter>
+<GraphParameter name="UNREDACTED">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	if(getParamValue("REDACTED_MODE") == "true") {return "false";}
+	else return "true";
+}
+]]></attr>
+</GraphParameter>
+<GraphParameter name="FILE_EXECUTORS" public="true" value="100"/>
+<GraphParameter name="FILE_SIZE_LIMIT_MB" value="100"/>
+<GraphParameter name="EXPORT_MODE" public="true" required="true" value="redacted">
+<SingleType allowCustomValues="false" name="simpleEnum" values="redacted|Redacted Mode;unredacted_clover_files|Unredacted Mode with only Clover files;unredacted_no_large_files|Unredacted Mode with all files under 100MB;unredacted_large_files|Unredacted Mode with all files"/>
+</GraphParameter>
+<GraphParameterFile fileURL="workspace.prm"/>
+</GraphParameters>
+<RichTextNote backgroundColor="8080FF" folded="false" fontSize="medium" height="550" id="Note1" textColor="444444" width="451" x="975" y="150">
+<attr name="text"><![CDATA[h3. "INCLUDE" and "EXCLUDE" parameters are strings with sandbox names comma separated. SetJobOutput converts them to lists for use in the filters]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="8080FF" folded="false" fontSize="medium" height="376" id="Note5" textColor="444444" width="550" x="2525" y="500">
+<attr name="text"><![CDATA[h3. Add timestamp and move to Data Out
+Check for Redacted or not
+
+
+]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="9B59B6" folded="false" fontSize="medium" height="376" id="Note3" textColor="FFFFFF" width="477" x="975" y="-250">
+<attr name="text"><![CDATA[h3. Create Sanitization Report with Headers
+]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="9B59B6" folded="false" fontSize="medium" height="300" id="Note2" textColor="FFFFFF" width="400" x="1000" y="375">
+<attr name="text"><![CDATA[h3. If "INCLUDE" parameter is present, it will take ONLY those sandboxes, ignoring "EXCLUDE". Otherwise it will take all sandboxes EXCEPT what's in "EXCLUDE"]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="9B59B6" enabled="${REDACTED_MODE}" folded="false" fontSize="medium" height="500" id="Note0" textColor="FFFFFF" width="1076" x="1550" y="-450">
+<attr name="text"><![CDATA[h3. Write Redaction reports to zip
+]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="96C42D" folded="false" fontSize="large" height="576" id="Note4" textColor="000000" width="726" x="225" y="-100">
+<attr name="text"><![CDATA[h1. Project Sanitizer
+h3. Run this graph to scan your sandboxes and create copies with sensitive data redacted
+
+
+
+
+h3. The output will be a zip file in the data-out folder called "SandboxExport_{TIMESTAMP}.zip"]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="9B59B6" enabled="${REDACTED_MODE}" folded="false" fontSize="medium" height="276" id="Note6" textColor="FFFFFF" width="477" x="1875" y="450">
+<attr name="text"><![CDATA[h3. Export in Redacted Mode]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="8080FF" enabled="${UNREDACTED}" folded="false" fontSize="medium" height="276" id="Note7" textColor="444444" width="477" x="1875" y="750">
+<attr name="text"><![CDATA[h3. Export unredacted]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="8080FF" enabled="${UNREDACTED}" folded="false" fontSize="medium" height="350" id="Note8" textColor="000000" width="1076" x="1550" y="75">
+<attr name="text"><![CDATA[h3. Write unexported files reports to zip
+]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="FAF6D6" folded="false" fontSize="medium" height="177" id="Note9" textColor="444444" width="251" x="2350" y="-25">
+<attr name="text"><![CDATA[h3. Which reports to write are dynamically enabled/disabled based on REDACTED_MODE parameter]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="FAF6D6" folded="false" fontSize="medium" height="250" id="Note10" textColor="444444" width="377" x="1475" y="500">
+<attr name="text"><![CDATA[h3. Which graph to run is dynamically enabled/disabled based on REDACTED_MODE parameter]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="FAF6D6" folded="false" fontSize="medium" height="250" id="Note11" textColor="444444" width="400" x="3125" y="600">
+<attr name="text"><![CDATA[h3. ${DATAOUT_DIR}/SandboxExport_${TIMESTAMP}.zip
+
+not sure how to make the data service output work with timestamp - ask Petr on Monday]]></attr>
+</RichTextNote>
+<Dictionary>
+<Entry contentType="string" input="true" name="INCLUDE" output="true" type="list"/>
+<Entry contentType="string" input="true" name="EXCLUDE" output="true" type="list"/>
+<Entry input="true" name="OUTPUT" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node guiName="create headers" guiX="995" guiY="-75" id="CREATE_HEADERS" type="DATA_GENERATOR">
+<attr name="generate"><![CDATA[//#CTL2
+
+// Generates output record.
+function integer generate() {
+	
+	for (integer i = 0; i < length($out.0); i++){
+		setStringValue($out.0, i, getFieldName($out.0, i));	
+	}
+	
+	for (integer i = 0; i < length($out.1); i++){
+		setStringValue($out.1, i, getFieldName($out.1, i));	
+	}
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the generate. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if generate() throws an exception.
+// function integer generateOnError(string errorMessage, string stackTrace) {
+// }
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node fileURL="${DATATMP_DIR}/TEMP_unexportedFiles.csv" guiName="FlatFileWriter" guiX="1245" guiY="-25" id="FLAT_FILE_WRITER1" type="FLAT_FILE_WRITER"/>
+<Node append="false" fileURL="${DATATMP_DIR}/TEMP_RedactionReport.csv" guiName=" Sanitization Report Headers" guiX="1220" guiY="-175" id="SANITIZATION_REPORT_HEADERS" makeDirs="true" outputFieldNames="false" quotedStrings="false" type="FLAT_FILE_WRITER"/>
+<Node guiName="SetJobOutput" guiX="1195" guiY="250" id="SET_JOB_OUTPUT" type="SET_JOB_OUTPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+function integer init() {
+	dictionary.INCLUDE = split(getParamValue("INCLUDE"),",");
+	dictionary.EXCLUDE = split(getParamValue("EXCLUDE"),",");
+	return ALL;
+}
+
+function integer transform() {
+
+	return ALL;
+}]]></attr>
+</Node>
+<Node guiName="SetJobOutput" guiX="3345" guiY="725" id="SET_JOB_OUTPUT1" type="SET_JOB_OUTPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.OUTPUT = "${DATAOUT_DIR}/SandboxExport_" + getParamValue("TIMESTAMP") + ".zip";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="CREATE_HEADERS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge13" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="SANITIZATION_REPORT_HEADERS:0"/>
+<Edge fromNode="CREATE_HEADERS:1" guiBendpoints="" guiRouter="Manhattan" id="Edge24" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 1 (out)" toNode="FLAT_FILE_WRITER1:0"/>
+</Phase>
+<Phase number="2">
+<Node enabled="${UNREDACTED}" executorsNumber="${SANDBOX_EXECUTORS}" guiName="exportSandbox" guiX="1920" guiY="825" id="EXPORT_SANDBOX" jobURL="${GRAPH_DIR}/child_graphs/exportSandbox.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.SANDBOX_PATH = $in.0.URL;
+	$out.0.executionLabel = $in.0.name;
+	$out.1.ONLY_CLOVER_FILES = getParamValue("ONLY_CLOVER_FILES");
+	$out.1.INCLUDE_LARGE_FILES = getParamValue("INCLUDE_LARGE_FILES");
+	$out.1.EXECUTORS_NUMBER = getParamValue("FILE_EXECUTORS");
+	$out.1.FILE_SIZE_LIMIT_MB = getParamValue("FILE_SIZE_LIMIT_MB");
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node enabled="${REDACTED_MODE}" executorsNumber="${SANDBOX_EXECUTORS}" guiName="export Sandbox" guiX="1920" guiY="525" id="EXPORT_SANDBOX1" jobURL="${GRAPH_DIR}/child_graphs/redactSandbox.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.SANDBOX_PATH = $in.0.URL;
+	$out.0.executionLabel = $in.0.name;
+	$out.1.EXECUTORS_NUMBER = getParamValue("FILE_EXECUTORS");
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Ignore itself" guiX="770" guiY="525" id="IGNORE_ITSELF" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.name != getParamValue("SANDBOX_CODE")]]></attr>
+</Node>
+<Node guiName="is directory" guiX="520" guiY="525" id="IS_DIRECTORY" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.isDirectory]]></attr>
+</Node>
+<Node enabled="${ENABLE_INCLUDED}" guiName="only INCLUDED" guiX="1020" guiY="525" id="ONLY_INCLUDED" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+in($in.0.name,dictionary.INCLUDE)]]></attr>
+</Node>
+<Node enabled="${ENABLE_EXCLUDED}" guiName="remove EXCLUDED" guiX="1220" guiY="525" id="REMOVE_EXCLUDED" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+!in($in.0.name,dictionary.EXCLUDE)]]></attr>
+</Node>
+<Node fileURL="${SANDBOXES_DIR}" guiName="Sandboxes Directory" guiX="245" guiY="525" id="SANDBOXES_DIRECTORY" type="LIST_FILES"/>
+<Node guiName="SimpleCopy" guiX="1545" guiY="600" id="SIMPLE_COPY2" type="SIMPLE_COPY"/>
+<Node enabled="${REDACTED_MODE}" guiName="Success" guiX="2170" guiY="475" id="SUCCESS" type="SUCCESS"/>
+<Node enabled="${UNREDACTED}" guiName="Success" guiX="2120" guiY="775" id="SUCCESS1" type="SUCCESS"/>
+<Edge fromNode="EXPORT_SANDBOX:0" guiBendpoints="" guiRouter="Manhattan" id="Edge16" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SUCCESS1:0"/>
+<Edge fromNode="EXPORT_SANDBOX:1" guiBendpoints="" guiRouter="Manhattan" id="Edge15" inPort="Port 0 (in)" outPort="Port 1 (error)" toNode="FAIL1:0"/>
+<Edge fromNode="EXPORT_SANDBOX1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SUCCESS:0"/>
+<Edge fromNode="EXPORT_SANDBOX1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" outPort="Port 1 (error)" toNode="FAIL:0"/>
+<Edge fromNode="IGNORE_ITSELF:0" guiBendpoints="" guiRouter="Manhattan" id="Edge14" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="ONLY_INCLUDED:0"/>
+<Edge fromNode="IS_DIRECTORY:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="IGNORE_ITSELF:0"/>
+<Edge fromNode="ONLY_INCLUDED:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="REMOVE_EXCLUDED:0"/>
+<Edge fromNode="REMOVE_EXCLUDED:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="SIMPLE_COPY2:0"/>
+<Edge fromNode="SANDBOXES_DIRECTORY:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="IS_DIRECTORY:0"/>
+<Edge fromNode="SIMPLE_COPY2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge18" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="EXPORT_SANDBOX1:0"/>
+<Edge fromNode="SIMPLE_COPY2:1" guiBendpoints="" guiRouter="Manhattan" id="Edge23" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="EXPORT_SANDBOX:0"/>
+</Phase>
+<Phase number="3">
+<Node enabled="${UNREDACTED}" fileURL="${DATATMP_DIR}/TEMP_unexportedFiles.csv" guiName="FlatFileReader" guiX="1595" guiY="225" id="FLAT_FILE_READER1" skipRows="1" type="FLAT_FILE_READER"/>
+<Node enabled="${UNREDACTED}" guiName="SimpleCopy" guiX="1820" guiY="225" id="SIMPLE_COPY1" type="SIMPLE_COPY"/>
+<Edge fromNode="FLAT_FILE_READER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (output)" toNode="SIMPLE_COPY1:0"/>
+<Edge fromNode="SIMPLE_COPY1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge21" inPort="Port 0 (input)" outPort="Port 0 (out)" toNode="SPREADSHEET_DATA_WRITER:0"/>
+<Edge fromNode="SIMPLE_COPY1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge22" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="FLAT_FILE_WRITER:0"/>
+</Phase>
+<Phase number="4">
+<Node enabled="${REDACTED_MODE}" fileURL="${DATATMP_DIR}/TEMP_RedactionReport.csv" guiName="FlatFileReader" guiX="1595" guiY="-275" id="FLAT_FILE_READER" skipRows="1" type="FLAT_FILE_READER"/>
+<Node enabled="${REDACTED_MODE}" guiName="Requires attention" guiX="1995" guiY="-275" id="REQUIRES_ATTENTION" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+contains($in.0.status,"REQUIRES ATTENTION")]]></attr>
+</Node>
+<Node enabled="${REDACTED_MODE}" guiName="SimpleCopy" guiX="1770" guiY="-275" id="SIMPLE_COPY" type="SIMPLE_COPY"/>
+<Node enabled="${UNREDACTED}" existingSheetsActions="DO_NOTHING" fileURL="zip:(${DATATMP_DIR}/Exported.zip)#UnexportedFiles.xlsx" guiName="SpreadsheetDataWriter" guiX="2095" guiY="125" id="SPREADSHEET_DATA_WRITER" makeDirs="true" sheet="Unexported Files" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY"/>
+<Edge fromNode="FLAT_FILE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (output)" toNode="SIMPLE_COPY:0"/>
+<Edge fromNode="REQUIRES_ATTENTION:0" guiBendpoints="" guiRouter="Manhattan" id="Edge20" inPort="Port 0 (input)" outPort="Port 0 (accepted)" toNode="REQUIRES_ATTENTION_XLSX:0"/>
+<Edge fromNode="SIMPLE_COPY:0" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="REDACTION_REPORT_CSV:0"/>
+<Edge fromNode="SIMPLE_COPY:1" guiBendpoints="" guiRouter="Manhattan" id="Edge19" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="REQUIRES_ATTENTION:0"/>
+<Edge fromNode="SIMPLE_COPY:2" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 0 (input)" outPort="Port 2 (out)" toNode="REDACTION_REPORT_XLSX:0"/>
+</Phase>
+<Phase number="5">
+<Node enabled="${UNREDACTED}" fileURL="zip:(${DATATMP_DIR}/Exported.zip)#unexportedFiles.csv" guiName="FlatFileWriter" guiX="2095" guiY="275" id="FLAT_FILE_WRITER" type="FLAT_FILE_WRITER"/>
+<Node enabled="${REDACTED_MODE}" fileURL="zip:(${DATATMP_DIR}/Redacted.zip)#RedactionReport.csv" guiName="RedactionReport.csv" guiX="1995" guiY="-425" id="REDACTION_REPORT_CSV" makeDirs="true" type="FLAT_FILE_WRITER"/>
+</Phase>
+<Phase number="6">
+<Node enabled="${REDACTED_MODE}" excludeFields="file_name" existingSheetsActions="CLEAR_SHEETS" fileURL="zip:(${DATATMP_DIR}/Redacted.zip)#RedactionReport.xlsx" guiName="Requires Attention xlsx" guiX="2195" guiY="-275" id="REQUIRES_ATTENTION_XLSX" makeDirs="true" sheet="REQUIRES ATTENTION" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY"/>
+</Phase>
+<Phase number="7">
+<Node enabled="${REDACTED_MODE}" excludeFields="file_name" existingSheetsActions="CLEAR_SHEETS" fileURL="zip:(${DATATMP_DIR}/Redacted.zip)#RedactionReport.xlsx" guiName="Redaction Report xlsx" guiX="1995" guiY="-125" id="REDACTION_REPORT_XLSX" makeDirs="true" sheet="All" type="SPREADSHEET_WRITER" writeMode="OVERWRITE_SHEET_IN_MEMORY"/>
+</Phase>
+<Phase number="98">
+<Node guiName="redacted?" guiX="2720" guiY="650" id="REDACTED" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+str2bool(getParamValue("REDACTED_MODE"))]]></attr>
+</Node>
+<Node guiName="rename redacted" guiX="2895" guiY="600" id="RENAME_REDACTED" makeParentDirs="true" sourceURL="${DATATMP_DIR}/Redacted.zip" targetURL="${DATAOUT_DIR}/SandboxExport_${TIMESTAMP}.zip" type="MOVE_FILES"/>
+<Node guiName="rename unredacted" guiX="2895" guiY="725" id="RENAME_UNREDACTED" makeParentDirs="true" sourceURL="${DATATMP_DIR}/Exported.zip" targetURL="${DATAOUT_DIR}/SandboxExport_${TIMESTAMP}.zip" type="MOVE_FILES"/>
+<Node fileURL="${DATATMP_DIR}/TEMP_RedactionReport.csv" guiName="TEMP RedactionReport" guiX="2670" guiY="-275" id="TEMP_REDACTION_REPORT" type="DELETE_FILES"/>
+<Node fileURL="${DATATMP_DIR}/TEMP_unexportedFiles.csv" guiName="TEMP unexportedFiles" guiX="2670" guiY="225" id="TEMP_UNEXPORTED_FILES" type="DELETE_FILES"/>
+<Node guiName="trigger" guiX="2545" guiY="650" id="TRIGGER" type="DATA_GENERATOR">
+<attr name="generate"><![CDATA[//#CTL2
+
+// Generates output record.
+function integer generate() {
+	$out.0.triggerRename = "All this is doing is triggering the proper Rename component";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the generate. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if generate() throws an exception.
+// function integer generateOnError(string errorMessage, string stackTrace) {
+// }
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="REDACTED:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="RENAME_REDACTED:0"/>
+<Edge fromNode="REDACTED:1" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 0 (in)" outPort="Port 1 (rejected)" toNode="RENAME_UNREDACTED:0"/>
+<Edge fromNode="TRIGGER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge12" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (out)" toNode="REDACTED:0"/>
+</Phase>
+<Phase number="99">
+<Node enabled="${REDACTED_MODE}" guiName="Fail" guiX="2170" guiY="600" id="FAIL" type="FAIL"/>
+<Node enabled="${UNREDACTED}" guiName="Fail" guiX="2120" guiY="900" id="FAIL1" type="FAIL"/>
+</Phase>
+</Graph>

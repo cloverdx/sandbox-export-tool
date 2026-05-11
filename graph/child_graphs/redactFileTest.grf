@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="NickTaylor" created="Tue Apr 21 09:15:34 CEST 2026" guiVersion="7.3.1.25" id="1776758984928" licenseCode="CLCDSCLOVE72646208SP" name="redactFileTest" showComponentDetails="true">
+<Global>
+<Metadata id="Metadata0" previewAttachmentCharset="UTF-8">
+<Record eofAsDelimiter="true" fieldDelimiter="|" name="joinFiles" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n\\|\n\\|\r\\|\n\r" type="delimited">
+<Field auto_filling="source_name" name="fileURL" type="string"/>
+<Field auto_filling="source_row_count" name="sourceRow" trim="true" type="integer"/>
+<Field name="redacted" type="string"/>
+<Field name="original" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata10">
+<Record eofAsDelimiter="true" fieldDelimiter="ThereOnceWasABoyCalledEustaceClarenceScrubb" name="parseFile" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n\\|\n\\|\r\\|\n\r" type="delimited">
+<Field name="lineContent" type="string"/>
+<Field auto_filling="source_name" name="fileURL" type="string"/>
+<Field auto_filling="source_row_count" name="sourceRow" type="integer"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata2">
+<Record eofAsDelimiter="true" fieldDelimiter="|" name="parseFile_1" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n\\|\n\\|\r\\|\n\r" type="delimited">
+<Field delimiter="|" name="lineContent" type="string"/>
+<Field auto_filling="source_name" name="fileURL" type="string"/>
+<Field auto_filling="source_row_count" delimiter="\r\n" name="sourceRow" type="integer"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="|" name="suspiciousLine" recordDelimiter="\n" type="delimited">
+<Field name="fileURL" type="string"/>
+<Field name="sourceRow" type="integer"/>
+<Field name="original" type="string"/>
+<Field name="reason" type="string"/>
+</Record>
+</Metadata>
+<GraphParameters>
+<GraphParameterFile fileURL="workspace.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node fileURL="${PROJECT}/testing_artifacts/redactURLs" guiName="ListFiles" guiX="270" guiY="25" id="LIST_FILES" type="LIST_FILES"/>
+<Node guiName="redactFile" guiX="470" guiY="25" id="REDACT_FILE" jobURL="${GRAPH_DIR}/child_graphs/redactFile.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.FILE_URL = $in.0.URL;
+	$out.0.executionLabel = $in.0.name;
+	if(endsWith($in.0.URL,".prm")){$out.1.FILE_TYPE_PORT = "0";}
+	else if(endsWith($in.0.URL,".cfg")){$out.1.FILE_TYPE_PORT = "1";}
+	else if(endsWith($in.0.URL,".grf") or endsWith($in.0.URL,".sgrf") or endsWith($in.0.URL,".jbf")or endsWith($in.0.URL,".rjob")){$out.1.FILE_TYPE_PORT = "2";}
+	else if(endsWith($in.0.URL,".wjob") or endsWith($in.0.URL,".wsrc")or endsWith($in.0.URL,".wtgt")){$out.1.FILE_TYPE_PORT = "3";}
+	else {$out.1.FILE_TYPE_PORT = "4";}
+
+	$out.1.SANDBOX_PATH = "C:/Users/NickTaylor/CloverDX/7_3_1/sandboxes/ProjectSanitizer";
+	$out.1.SANDBOX_NAME = "ProjectSanitizer";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Edge fromNode="LIST_FILES:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="REDACT_FILE:0"/>
+</Phase>
+<Phase number="1">
+<Node guiName="Check suspicious (potential misses)" guiX="1245" guiY="500" id="CHECK_SUSPICIOUS" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Checks an unchanged line for patterns that suggest it should have been redacted.
+// Returns a human-readable reason string, or "" if the line looks clean.
+
+function string checkSuspicious(string line) {
+	string lc = lowerCase(line);
+	string trimmed = trim(line);
+	// Skip blank lines, comment lines, XML declarations, and CDATA markers
+	if (trimmed == "") { return ""; }
+	if (startsWith(trimmed, "#")) { return ""; }
+	if (startsWith(trimmed, "//")) { return ""; }
+	if (startsWith(trimmed, "<!--")) { return ""; }
+	if (startsWith(trimmed, "<?xml")) { return ""; }
+	if (startsWith(trimmed, "<![CDATA[")) { return ""; }
+	// Skip lines that are pure XML structure with no URL-like content
+	if (!contains(line, "://") and !contains(line, "=")) { return ""; }
+
+	// ── Check 1: credentials in URL authority (scheme://user[:pass]@host) ──────
+	if (contains(line, "://") and contains(line, "@")) {
+		integer schemeEnd = indexOf(line, "://") + 3;
+		integer atPos = indexOf(line, "@", schemeEnd);
+		if (atPos > schemeEnd) {
+			integer slashAfterScheme = indexOf(line, "/", schemeEnd);
+			// @ must be before the first path slash (i.e. it is in the authority, not the path)
+			if (slashAfterScheme < 0 or atPos < slashAfterScheme) {
+				string authority = substring(line, schemeEnd, atPos - schemeEnd);
+				if (!contains(authority, "${") and !contains(authority, "REDACTED")) {
+					return concat("Credentials in URL authority: [", left(authority, 40), "]");
+				}
+			}
+		}
+	}
+
+	// ── Check 2: sensitive query parameters still carrying a real value ─────────
+	string[] params = ["password=", "api_key=", "apikey=", "secret=", "access_token=",
+	                   "bearer_token=", "token=", "awssecretkey=", "accountkey=",
+	                   "access_key=", "privatekey=", "sig=", "sas=", "client_secret="];
+	for (integer i = 0; i < length(params); i++) {
+		integer pos = indexOf(lc, params[i]);
+		if (pos >= 0) {
+			// Only suspicious if it appears after ? or & (i.e. it really is a query param)
+			string before = left(line, pos);
+			if (contains(before, "?") or contains(before, "&") or contains(before, "&amp;")) {
+				integer valueStart = pos + length(params[i]);
+				if (valueStart < length(line)) {
+					string rest = right(line, length(line) - valueStart);
+					// Grab value up to the next delimiter
+					integer end = length(rest);
+					integer amp  = indexOf(rest, "&"); if (amp  >= 0 and amp  < end) { end = amp;  }
+					integer qut  = indexOf(rest, "\""); if (qut  >= 0 and qut  < end) { end = qut;  }
+					integer apos = indexOf(rest, "'");  if (apos >= 0 and apos < end) { end = apos; }
+					string val = left(rest, end);
+					if (val != "" and !startsWith(lowerCase(val), "redacted") and !startsWith(val, "${")) {
+						return concat("Sensitive query param not redacted: ", params[i], left(val, 30));
+					}
+				}
+			}
+		}
+	}
+	return "";
+}
+
+function integer transform() {
+	$out.0.fileURL    = $in.0.fileURL;
+	$out.0.sourceRow  = $in.0.sourceRow;
+	$out.0.original   = $in.0.original;
+	$out.0.reason     = checkSuspicious($in.0.original);
+	return ALL;
+}
+]]></attr>
+</Node>
+<Node guiName="ExtHashJoin" guiX="970" guiY="325" id="EXT_HASH_JOIN" joinKey="$fileURL=$fileURL;$sourceRow=$sourceRow" type="EXT_HASH_JOIN">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.fileURL = $in.0.fileURL;
+	$out.0.sourceRow = $in.0.sourceRow;
+	$out.0.redacted = $in.0.lineContent;
+	$out.0.original = $in.1.lineContent;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="fileName" guiX="770" guiY="250" id="FILE_NAME" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	string[] fileNames = split($in.0.fileURL,"/");
+	
+	$out.0.fileURL = fileNames[length(fileNames)-1];
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="fileName" guiX="770" guiY="425" id="FILE_NAME1" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+	string[] fileNames = split($in.0.fileURL,"/");
+	
+	$out.0.fileURL = fileNames[length(fileNames)-1];
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Filter suspicious unchanged lines" guiX="1545" guiY="500" id="FILTER_SUSPICIOUS" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.reason != ""]]></attr>
+</Node>
+<Node dataPolicy="strict" fileURL="port:$0.URL:source" guiName="read file content" guiX="595" guiY="250" id="READ_FILE_CONTENT" type="FLAT_FILE_READER" verbose="true"/>
+<Node dataPolicy="strict" fileURL="port:$0.URL:source" guiName="read file content" guiX="595" guiY="425" id="READ_FILE_CONTENT1" type="FLAT_FILE_READER" verbose="true"/>
+<Node guiName="redacted lines" guiX="1170" guiY="325" id="REDACTED_LINES" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.redacted != $in.0.original]]></attr>
+</Node>
+<Node fileURL="zip:(${DATATMP_DIR}/Redacted.zip)" guiName="Redacted.zip" guiX="220" guiY="250" id="REDACTED_ZIP" recursive="true" type="LIST_FILES"/>
+<Node fileURL="${PROJECT}/testing_artifacts/redactURLs/" guiName="Redact URLS" guiX="220" guiY="425" id="REDACT_URLS" recursive="true" type="LIST_FILES"/>
+<Node guiName="remove Directory" guiX="395" guiY="250" id="REMOVE_DIRECTORY" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+!$in.0.isDirectory]]></attr>
+</Node>
+<Node guiName="remove Directory" guiX="395" guiY="425" id="REMOVE_DIRECTORY1" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+!$in.0.isDirectory]]></attr>
+</Node>
+<Node guiName="Trash - clean unchanged lines" guiX="1820" guiY="575" id="TRASH_CLEAN" type="TRASH"/>
+<Node fileURL="${DATAOUT_DIR}/redactTest_potential_misses.csv" guiName="Write - potential misses report" guiX="1820" guiY="425" id="WRITE_MISSES" type="FLAT_FILE_WRITER"/>
+<Node fileURL="${DATAOUT_DIR}/redactTest_changes.csv" guiName="Write - redacted lines report" guiX="1445" guiY="275" id="WRITE_REDACTED" type="FLAT_FILE_WRITER"/>
+<Edge fromNode="CHECK_SUSPICIOUS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge14" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (out)" toNode="FILTER_SUSPICIOUS:0"/>
+<Edge fromNode="EXT_HASH_JOIN:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="REDACTED_LINES:0"/>
+<Edge fromNode="FILE_NAME:0" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 0 (driver)" metadata="Metadata2" outPort="Port 0 (out)" toNode="EXT_HASH_JOIN:0"/>
+<Edge fromNode="FILE_NAME1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 1 (slave)" metadata="Metadata2" outPort="Port 0 (out)" toNode="EXT_HASH_JOIN:1"/>
+<Edge fromNode="FILTER_SUSPICIOUS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge15" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (accepted)" toNode="WRITE_MISSES:0"/>
+<Edge fromNode="FILTER_SUSPICIOUS:1" guiBendpoints="" guiRouter="Manhattan" id="Edge16" inPort="Port 0 (in)" outPort="Port 1 (rejected)" toNode="TRASH_CLEAN:0"/>
+<Edge fromNode="READ_FILE_CONTENT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" metadata="Metadata10" outPort="Port 0 (output)" toNode="FILE_NAME:0"/>
+<Edge fromNode="READ_FILE_CONTENT1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" metadata="Metadata10" outPort="Port 0 (output)" toNode="FILE_NAME1:0"/>
+<Edge fromNode="REDACTED_LINES:0" guiBendpoints="" guiRouter="Manhattan" id="Edge12" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (accepted)" toNode="WRITE_REDACTED:0"/>
+<Edge fromNode="REDACTED_LINES:1" guiBendpoints="" guiRouter="Manhattan" id="Edge13" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 1 (rejected)" toNode="CHECK_SUSPICIOUS:0"/>
+<Edge fromNode="REDACTED_ZIP:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="REMOVE_DIRECTORY:0"/>
+<Edge fromNode="REDACT_URLS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="REMOVE_DIRECTORY1:0"/>
+<Edge fromNode="REMOVE_DIRECTORY:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (input)" outPort="Port 0 (accepted)" toNode="READ_FILE_CONTENT:0"/>
+<Edge fromNode="REMOVE_DIRECTORY1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (input)" outPort="Port 0 (accepted)" toNode="READ_FILE_CONTENT1:0"/>
+</Phase>
+</Graph>

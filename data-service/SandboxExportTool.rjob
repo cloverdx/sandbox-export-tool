@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="NickTaylor" created="Fri Apr 24 09:48:38 CEST 2026" guiVersion="7.3.1.25" id="1777038575746" licenseCode="CLCDSCLOVE72646208SP" name="SandboxExportTool" nature="restJob" showComponentDetails="true">
+<Global>
+<EndpointSettings>
+<UrlPath>/SandboxExportTool</UrlPath>
+<Description>Tool for bulk exporting of sandboxes, with option for redacting sensitive data.</Description>
+<Category>Sandbox Export Tool</Category>
+<IconUrl>data-service/icon/sandbox.png</IconUrl>
+<RequestMethod name="POST"/>
+<RequestParameter description="Run ONLY these sandboxes (comma delimited list)" id="RestJobParameter0" location="form_data" name="INCLUDE" required="false" type="string"/>
+<RequestParameter description="Run all EXCEPT these sandboxes (comma delimited list)" id="RestJobParameter1" location="form_data" name="EXCLUDE" required="false" type="string"/>
+<RequestParameter id="RestJobParameter2" location="form_data" name="EXPORT_MODE" required="true" type="enumeration">
+<Options allowCustomValues="false">
+<Option label="Redacted Mode" value="redacted"/>
+<Option label="Unredacted Mode with only Clover files" value="unredacted_clover_files"/>
+<Option label="Unredacted Mode with all files under 100MB" value="unredacted_no_large_files"/>
+<Option label="Unredacted Mode with all files" value="unredacted_large_files"/>
+</Options>
+</RequestParameter>
+</EndpointSettings>
+<RestJobResponseStatus>
+<JobError>
+<reasonPhrase>Job failed</reasonPhrase>
+<statusCode>500</statusCode>
+<ReasonPhrase>Job failed</ReasonPhrase>
+<StatusCode>500</StatusCode>
+</JobError>
+<Success>
+<statusCode>200</statusCode>
+<StatusCode>200</StatusCode>
+</Success>
+<ValidationError>
+<reasonPhrase>Request validation failed</reasonPhrase>
+<statusCode>400</statusCode>
+<ReasonPhrase>Request validation failed</ReasonPhrase>
+<StatusCode>400</StatusCode>
+</ValidationError>
+</RestJobResponseStatus>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="|" name="ExecuteGraph_RunStatus" recordDelimiter="\n" type="delimited">
+<Field name="runId" trim="true" type="long"/>
+<Field name="originalJobURL" type="string"/>
+<Field format="yyyy-MM-dd HH:mm:ss" name="submitTime" trim="true" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss" name="startTime" trim="true" type="date"/>
+<Field format="yyyy-MM-dd HH:mm:ss" name="endTime" trim="true" type="date"/>
+<Field name="duration" trim="true" type="long"/>
+<Field name="executionGroup" type="string"/>
+<Field name="executionLabel" type="string"/>
+<Field name="status" type="string"/>
+<Field name="errException" type="string"/>
+<Field name="errMessage" type="string"/>
+<Field name="errComponent" type="string"/>
+<Field name="errComponentType" type="string"/>
+<Field name="OUTPUT" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata0">
+<Record fieldDelimiter="|" name="requestEcho" recordDelimiter="\r\n" type="delimited">
+<Field name="requestBody" type="string"/>
+<Field name="requestClientIpAddress" type="string"/>
+<Field name="requestContentType" type="string"/>
+<Field name="requestEncoding" type="string"/>
+<Field name="requestHeaders" type="string"/>
+<Field name="requestMethod" type="string"/>
+<Field name="requestParameters" type="string"/>
+</Record>
+</Metadata>
+<GraphParameters>
+<GraphParameter name="TIMESTAMP">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	return date2str(today(),"yyyyMMddhhmmss");
+}
+]]></attr>
+</GraphParameter>
+<GraphParameterFile fileURL="workspace.prm"/>
+</GraphParameters>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node guiName="Input" guiX="70" guiY="25" id="RESTJOB_INPUT0" requestFormat="STRING" restJobInput="true" type="RESTJOB_INPUT"/>
+<Node attachment="false" contentType="application/zip" fileURL="${DATAOUT_DIR}/SandboxExport_${TIMESTAMP}.zip" guiName="Output" guiX="895" guiY="25" id="RESTJOB_OUTPUT0" metadataName="true" responseFormat="FILE" restJobOutput="true" topLevelArray="true" type="RESTJOB_OUTPUT"/>
+<Node guiName="RUN_ME" guiX="370" guiY="50" id="RUN_ME" jobURL="${GRAPH_DIR}/RUN_ME.grf" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.INCLUDE = $in.0.INCLUDE;
+	$out.1.EXCLUDE = $in.0.EXCLUDE;
+	$out.1.EXPORT_MODE = $in.0.EXPORT_MODE;
+	$out.1.TIMESTAMP = getParamValue("TIMESTAMP");
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="GetJobInput" guiX="270" guiY="25" id="RequestParametersValidator" restJobInput="true" type="GET_JOB_INPUT">
+<attr name="mapping"><![CDATA[//#CTL2
+// Transforms input record into output record.
+function integer transform() {
+	if (isEmpty(getRequestParameter("EXPORT_MODE"))) { 
+		raiseError("Missing required request parameter: 'EXPORT_MODE'");
+	}
+	return ALL;
+}]]></attr>
+</Node>
+<Edge fromNode="RESTJOB_INPUT0:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" outPort="Port 0 (Parameters)" toNode="RUN_ME:0"/>
+</Phase>
+</Graph>

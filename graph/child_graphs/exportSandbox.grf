@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="NickTaylor" created="Fri Oct 10 10:11:02 CEST 2025" guiVersion="7.3.1.25" id="1760084092904" licenseCode="CLCDSCLOVE24765514SP" name="test" showComponentDetails="true">
+<Global>
+<Metadata id="Metadata0">
+<Record fieldDelimiter="|" name="extensions" previewAttachment="${DATAIN_DIR}/extensions.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" recordDelimiter="\r\n\\|\n\\|\r\\|\n\r" skipSourceRows="0" type="delimited">
+<Field name="extension_type" type="string"/>
+<Field eofAsDelimiter="true" name="extension" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="ListFiles_Result1">
+<Record fieldDelimiter="|" name="fileData" previewAttachmentCharset="UTF-8" recordDelimiter="\n" type="delimited">
+<Field name="URL" type="string"/>
+<Field name="name" type="string"/>
+<Field name="isDirectory" trim="true" type="boolean"/>
+<Field name="extension" type="string"/>
+<Field name="size" type="long"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="|" name="unexportedFiles" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field name="sandbox" type="string"/>
+<Field name="fileURL" type="string"/>
+<Field name="name" type="string"/>
+<Field name="size" trim="true" type="long"/>
+<Field name="note" type="string"/>
+</Record>
+</Metadata>
+<GraphParameters>
+<GraphParameter name="SANDBOX_PATH" public="true" required="true"/>
+<GraphParameter category="advanced" label="Number of executors" name="EXECUTORS_NUMBER" public="true" required="false" value="20">
+<ComponentReference referencedComponent="SANITIZE_FILE1" referencedProperty="executorsNumber"/>
+</GraphParameter>
+<GraphParameter name="SANDBOX_NAME">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	string sandbox = getParamValue("SANDBOX_PATH");
+	
+	// Remove final "/"
+	if (endsWith(sandbox,"/")) {sandbox = left(sandbox,(length(sandbox)-1));}
+	
+	//Isolate only the sandbox name from the path
+	integer sandboxIndex = 1 + lastIndexOf(sandbox,"/");
+	sandbox = right(sandbox,length(sandbox)-sandboxIndex);
+	
+	
+	return sandbox;
+}
+]]></attr>
+</GraphParameter>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameter name="ONLY_CLOVER_FILES" public="true" value="true">
+<attr name="description"><![CDATA[If "true" only clover files (.grf,.jbf,.etc.) will be exported.
+Other files (.csv,.json, etc.) will be ignored.
+If "false" all files in sandbox will be exported. ]]></attr>
+<SingleType name="bool"/>
+</GraphParameter>
+<GraphParameter name="INCLUDE_LARGE_FILES" public="true" required="true" value="false">
+<attr name="description"><![CDATA[ONLY FOR UNREDACTED MODE
+Large files can take a long time to export
+By default files over 1gb will not be exported.
+If this parameter is "true" all files will be exported
+regardless of size.]]></attr>
+<SingleType name="bool"/>
+</GraphParameter>
+<GraphParameter name="FILE_SIZE_LIMIT_MB" value="100"/>
+</GraphParameters>
+<RichTextNote backgroundColor="FFB9B9" folded="false" fontSize="large" height="151" id="Note8" textColor="000000" width="877" x="50" y="175">
+<attr name="text"><![CDATA[h1. This graph is meant to run as a child graph from RUN_ME.grf. It's not meant to run on it's own
+]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="9B59B6" folded="false" fontSize="medium" height="350" id="Note0" textColor="FFFFFF" width="726" x="500" y="425">
+<attr name="text"><![CDATA[h3. Only Clover files or all files - determined by parameter ONLY_CLOVER_FILES]]></attr>
+</RichTextNote>
+<Dictionary/>
+</Global>
+<Phase number="0">
+<Node guiName="add extension field" guiX="570" guiY="500" id="ADD_EXTENSION_FIELD" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.extension = getFileExtension($in.0.name);
+	$out.0.size = $in.0.size;
+	return ALL;
+}
+]]></attr>
+</Node>
+<Node executorsNumber="${EXECUTORS_NUMBER}" guiName="exportFile" guiX="1295" guiY="500" id="EXPORT_FILE" jobURL="${GRAPH_DIR}/child_graphs/exportFile.grf" stopOnFail="false" type="EXECUTE_GRAPH">
+<attr name="inputMapping"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.1.SANDBOX_PATH = getParamValue("SANDBOX_PATH");
+	$out.1.SANDBOX_NAME = getParamValue("SANDBOX_NAME");
+	$out.1.FILE_URL = $in.0.URL;
+	$out.1.FILE_NAME = $in.0.name;
+	$out.0.executionLabel = $in.0.name;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node fileURL="${DATAIN_DIR}/extensions.csv" guiName="extensions to keep" guiX="570" guiY="625" id="EXTENSIONS_TO_KEEP" type="FLAT_FILE_READER"/>
+<Node guiName="ExtHashJoin" guiX="795" guiY="500" id="EXT_HASH_JOIN" joinKey="$extension=$extension" type="EXT_HASH_JOIN">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.* = $in.0.*;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Include large files?" guiX="320" guiY="500" id="FILTER" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.size <= str2long(getParamValue("FILE_SIZE_LIMIT_MB")) * 1048576]]></attr>
+</Node>
+<Node append="true" fileURL="${DATATMP_DIR}/TEMP_unexportedFiles.csv" guiName="FlatFileWriter" guiX="1645" guiY="825" id="FLAT_FILE_WRITER" type="FLAT_FILE_WRITER"/>
+<Node guiName="ignore Directories" guiX="45" guiY="500" id="IGNORE_DIRECTORIES" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+$in.0.isDirectory == false]]></attr>
+</Node>
+<Node guiName="Include all files?" guiX="920" guiY="625" id="INCLUDE_ALL_FILES" type="EXT_FILTER">
+<attr name="filterExpression"><![CDATA[//#CTL2
+getParamValue("ONLY_CLOVER_FILES") == "false"]]></attr>
+</Node>
+<Node fileURL="${SANDBOX_PATH}" guiName="ListFiles" guiX="-105" guiY="500" id="LIST_FILES" recursive="true" type="LIST_FILES"/>
+<Node guiName="Map" guiX="420" guiY="850" id="MAP" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.fileURL = $in.0.URL;
+	$out.0.name = $in.0.name;
+	$out.0.size = $in.0.size;
+	$out.0.sandbox = getParamValue("SANDBOX_NAME");
+	$out.0.note = concat("File is larger than ",getParamValue("FILE_SIZE_LIMIT_MB"), "MB");
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Map" guiX="1070" guiY="825" id="MAP1" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.fileURL = $in.0.URL;
+	$out.0.name = $in.0.name;
+	$out.0.size = $in.0.size;
+	$out.0.sandbox = getParamValue("SANDBOX_NAME");
+	$out.0.note = "File is not a CloverDX File";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Map" guiX="1320" guiY="725" id="MAP2" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.fileURL = $in.0.originalJobURL;
+	$out.0.name = $in.0.executionLabel;
+	$out.0.sandbox = getParamValue("SANDBOX_NAME");
+	$out.0.note = "There was a problem copying the file. Check logs for more info";
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="SimpleGather" guiX="1070" guiY="500" id="SIMPLE_GATHER" type="SIMPLE_GATHER"/>
+<Node guiName="SimpleGather" guiX="1495" guiY="825" id="SIMPLE_GATHER1" type="SIMPLE_GATHER"/>
+<Node guiName="Success" guiX="1620" guiY="425" id="SUCCESS" type="SUCCESS"/>
+<Edge fromNode="ADD_EXTENSION_FIELD:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (driver)" metadata="ListFiles_Result1" outPort="Port 0 (out)" toNode="EXT_HASH_JOIN:0"/>
+<Edge fromNode="EXPORT_FILE:0" guiBendpoints="" guiRouter="Manhattan" id="Edge18" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="SUCCESS:0"/>
+<Edge fromNode="EXPORT_FILE:1" guiBendpoints="" guiRouter="Manhattan" id="Edge15" inPort="Port 0 (in)" outPort="Port 1 (error)" toNode="MAP2:0"/>
+<Edge fromNode="EXTENSIONS_TO_KEEP:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 1 (slave)" metadata="Metadata0" outPort="Port 0 (output)" toNode="EXT_HASH_JOIN:1"/>
+<Edge fromNode="EXT_HASH_JOIN:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (in)" metadata="ListFiles_Result1" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:0"/>
+<Edge fromNode="EXT_HASH_JOIN:1" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="INCLUDE_ALL_FILES:0"/>
+<Edge fromNode="FILTER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="ADD_EXTENSION_FIELD:0"/>
+<Edge fromNode="FILTER:1" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" outPort="Port 1 (rejected)" toNode="MAP:0"/>
+<Edge fromNode="IGNORE_DIRECTORIES:0" guiBendpoints="" guiRouter="Manhattan" id="Edge19" inPort="Port 0 (in)" outPort="Port 0 (accepted)" toNode="FILTER:0"/>
+<Edge fromNode="INCLUDE_ALL_FILES:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 1 (in)" outPort="Port 0 (accepted)" toNode="SIMPLE_GATHER:1"/>
+<Edge fromNode="INCLUDE_ALL_FILES:1" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 0 (in)" outPort="Port 1 (rejected)" toNode="MAP1:0"/>
+<Edge fromNode="LIST_FILES:0" guiBendpoints="" guiRouter="Manhattan" id="Edge14" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="IGNORE_DIRECTORIES:0"/>
+<Edge fromNode="MAP:0" guiBendpoints="" guiRouter="Manhattan" id="Edge13" inPort="Port 1 (in)" metadata="Metadata1" outPort="Port 0 (out)" toNode="SIMPLE_GATHER1:1"/>
+<Edge fromNode="MAP1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (out)" toNode="SIMPLE_GATHER1:0"/>
+<Edge fromNode="MAP2:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 2 (in)" outPort="Port 0 (out)" toNode="SIMPLE_GATHER1:2"/>
+<Edge fromNode="SIMPLE_GATHER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="EXPORT_FILE:0"/>
+<Edge fromNode="SIMPLE_GATHER1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge12" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="FLAT_FILE_WRITER:0"/>
+</Phase>
+</Graph>

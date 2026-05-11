@@ -1,0 +1,810 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="NickTaylor" created="Wed Apr 15 00:00:00 CEST 2026" guiVersion="7.3.1.25" id="1776093491631" licenseCode="CLCDSCLOVE24765514SP" name="redactURLs" nature="subgraph" showComponentDetails="true">
+<Global>
+<inputPorts>
+<singlePort connected="true" name="0"/>
+</inputPorts>
+<outputPorts>
+<singlePort connected="true" name="0"/>
+<singlePort connected="true" name="1"/>
+</outputPorts>
+<Metadata fileURL="${META_DIR}/sanitizationReport.fmt" id="Metadata8"/>
+<Metadata id="Metadata3">
+<Record fieldDelimiter="|" name="fileContent" recordDelimiter="\r\n" type="delimited">
+<Field name="lineContent" type="string"/>
+<Field name="fileURL" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="MetadataWithList">
+<Record fieldDelimiter="|" name="fileContentWithList" recordDelimiter="\r\n" type="delimited">
+<Field name="lineContent" type="string"/>
+<Field name="fileURL" type="string"/>
+<Field containerType="list" name="propertiesList" type="string"/>
+<Field containerType="list" name="sensitiveParamsList" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="\r\n\\|\n\\|\r\\|\n\r" name="properties" previewAttachment="${DATAIN_DIR}/urlProperties.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" skipSourceRows="0" type="delimited">
+<Field eofAsDelimiter="true" name="property" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata5">
+<Record fieldDelimiter="|" name="propertiesList" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field containerType="list" name="propertiesList" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata7">
+<Record fieldDelimiter="|" name="recordName" recordDelimiter="\n" type="delimited">
+<Field label="Sandbox" name="sandbox" type="string"/>
+<Field label="File" name="file_url" type="string"/>
+<Field label="File Name" name="file_name" type="string"/>
+<Field label="Type" name="type" type="string"/>
+<Field label="Name" name="name" type="string"/>
+<Field label="Redacted Properties" name="redacted_properties" type="string"/>
+<Field label="Status" name="status" type="string"/>
+<Field label="Message" name="message" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata9" previewAttachmentCharset="UTF-8">
+<Record fieldDelimiter="|" name="sanitizationReportDebug" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field label="Sandbox" name="sandbox" type="string"/>
+<Field label="File" name="file_url" type="string"/>
+<Field label="File Name" name="file_name" type="string"/>
+<Field label="Type" name="type" type="string"/>
+<Field label="Name" name="name" type="string"/>
+<Field label="Redacted Properties" name="redacted_properties" type="string"/>
+<Field label="Status" name="status" type="string"/>
+<Field label="Message" name="message" type="string"/>
+<Field name="rowId" type="integer"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata2">
+<Record fieldDelimiter="\r\n\\|\n\\|\r\\|\n\r" name="sensitiveParams" previewAttachment="${DATAIN_DIR}/sensitiveQueryParams.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" skipSourceRows="0" type="delimited">
+<Field eofAsDelimiter="true" name="param" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata6">
+<Record fieldDelimiter="|" name="sensitiveParamsList" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field containerType="list" name="sensitiveParamsList" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata0">
+<Record fieldDelimiter="|" name="url_redaction_query_params_test" previewAttachment="${DATAIN_DIR}/url_redaction_query_params_test.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" recordDelimiter="\n" skipSourceRows="1" type="delimited">
+<Field name="lineContent" type="string"/>
+<Field eofAsDelimiter="true" name="fileURL" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata4">
+<Record fieldDelimiter="|" name="urlRedactionDebugReportingOutput" previewAttachment="${DATAIN_DIR}/urlRedactionDebugReportingOutput.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" recordDelimiter="\n" skipSourceRows="1" type="delimited">
+<Field name="sandbox" type="string"/>
+<Field name="file_url" type="string"/>
+<Field name="file_name" type="string"/>
+<Field name="type" type="string"/>
+<Field name="name" type="string"/>
+<Field name="redacted_properties" type="string"/>
+<Field name="status" type="string"/>
+<Field eofAsDelimiter="true" name="message" type="string"/>
+<Field auto_filling="global_row_count" name="rowId" type="integer"/>
+</Record>
+</Metadata>
+<GraphParameters>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameter name="SANDBOX_PATH" public="true" required="true"/>
+<GraphParameter name="SANDBOX_NAME" public="true">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	string sandbox = getParamValue("SANDBOX_PATH");
+	if (endsWith(sandbox,"/")) {sandbox = left(sandbox,(length(sandbox)-1));}
+	integer sandboxIndex = 1 + lastIndexOf(sandbox,"/");
+	sandbox = right(sandbox,length(sandbox)-sandboxIndex);
+	return sandbox;
+}
+]]></attr>
+</GraphParameter>
+<GraphParameter name="FILE_NAME" public="true"/>
+</GraphParameters>
+<RichTextNote backgroundColor="3465A4" folded="false" fontSize="medium" height="150" id="Note_DebugInput" textColor="FFFFFF" width="310" x="-300" y="25">
+<attr name="text"><![CDATA[h3. Debug Input (standalone testing only)
+Feeds test lines directly into the subgraph when run standalone in Designer.
+Ignored when called from redactFile.grf — the parent graph supplies the input instead.
+Points to: urlRedactionDebugInput.csv]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="9B59B6" folded="false" fontSize="medium" height="150" id="Note_CSVBootstrap" textColor="FFFFFF" width="476" x="200" y="275">
+<attr name="text"><![CDATA[h3. Step 1 — Load configuration lists from CSV
+Two CSV files are read once at startup and collapsed into single list-field records:
+* *urlProperties.csv* — 35 property names to check (fileURL, transformURL, ldapUrl, etc.)
+* *sensitiveQueryParams.csv* — 39 query param names to redact (password, api_key, access_token, etc.)
+Dedup removes any duplicates. Denormalizer collapses all rows into one record containing a list.
+To add a new property or param name: edit the CSV — no code changes needed.]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="9B59B6" folded="false" fontSize="medium" height="125" id="Note_CrossJoin" textColor="FFFFFF" width="300" x="800" y="450">
+<attr name="text"><![CDATA[h3. Step 2 — CrossJoin
+Attaches both lists to every incoming file line.
+Each output record carries: lineContent, fileURL, propertiesList, sensitiveParamsList.
+The CSVs are only read once — not once per line.]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="9B59B6" folded="false" fontSize="medium" height="225" id="Note_PartitionMaps" textColor="FFFFFF" width="475" x="1175" y="-50">
+<attr name="text"><![CDATA[h3. Step 3 — Partition + Redaction Maps
+The Partition routes each line based on its source file extension:
+* *.cfg files* → REDACT_CFG (Java properties format: property=value)
+* *Everything else* → REDACT_XML (.grf, .sgrf, .jbf, .rjob, .prm — XML format: property="value")
+
+Both Maps apply the same protocol-aware redaction logic:
+* Credentials in URL authority (user:pass@host) → replaced with REDACTED@host
+* Sensitive query params (password=, api_key=, access_token= etc.) → value replaced with REDACTED
+* Safe URLs (${...} refs, sandbox://, file:/, hdfs://) → left entirely unchanged
+* zip/gzip wrappers and proxy wrappers → unwrapped, inner URL redacted, rebuilt
+
+Port 0 out: the (possibly modified) line content
+Port 1 out: a sanitisation report record for every line]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="9B59B6" folded="false" fontSize="medium" height="125" id="Note_Output" textColor="FFFFFF" width="350" x="1325" y="475">
+<attr name="text"><![CDATA[h3. Output
+*Port 0* — Sanitised line content. Flows back to redactFile.grf to be written into the output ZIP.
+*Port 1* — Sanitisation report records. One per line processed. Aggregated into the RedactionReport CSV/XLSX in the final ZIP.]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="27AE60" folded="false" fontSize="medium" height="150" id="Note_TestHarness" textColor="FFFFFF" width="580" x="1770" y="-100">
+<attr name="text"><![CDATA[h3. Automated Test Harness (debug only — inactive in production)
+Verifies both outputs against known-good expected CSVs every time the subgraph is run standalone.
+*Lines test:* actual output vs urlRedactionDebugOutput.csv — fails if any line was incorrectly redacted or left unchanged.
+*Report test:* actual report vs urlRedactionDebugReportOutput.csv — fails if any report record is wrong.
+DataIntersection routes mismatches to Fail (test fails) and matches to Success (test passes).
+All components here are marked debugOutput=true and are invisible when called from redactFile.grf.]]></attr>
+</RichTextNote>
+<Dictionary>
+<Entry dictval.value="UNREDACTED" input="true" name="status" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node debugOutput="true" guiName="Add fields" guiX="1820" guiY="350" id="ADD_FIELDS" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+integer rowID = 0;
+function integer transform() {
+	$out.0.* = $in.0.*;
+	$out.0.file_name = "urlRedactionDebugInput.csv";
+	$out.0.sandbox = "ProjectSanitizer";
+	$out.0.rowId = rowID;
+	rowID++;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node guiName="Concatenate" guiX="1495" guiY="350" id="CONCATENATE" type="CONCATENATE"/>
+<Node guiName="CrossJoin" guiX="750" guiY="300" id="CROSS_JOIN" type="CROSS_JOIN">
+<attr name="transform"><![CDATA[//#CTL2
+function integer transform() {
+	$out.0.lineContent         = $in.0.lineContent;
+	$out.0.fileURL             = $in.0.fileURL;
+	$out.0.propertiesList      = $in.1.propertiesList;
+	$out.0.sensitiveParamsList = $in.2.sensitiveParamsList;
+	return ALL;
+}
+]]></attr>
+</Node>
+<Node debugOutput="true" guiName="DataIntersection" guiX="2245" guiY="100" id="DATA_INTERSECTION" joinKey="$lineContent=$lineContent;$fileURL=$fileURL" type="DATA_INTERSECTION">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.lineContent = $in.0.lineContent;
+	$out.0.fileURL = $in.0.fileURL;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node debugOutput="true" guiName="DataIntersection" guiX="2245" guiY="500" id="DATA_INTERSECTION1" joinKey="$rowId=$rowId;$sandbox=$sandbox;$file_url=$file_url;$file_name=$file_name;$redacted_properties=$redacted_properties;$status=$status;$message=$message" keyDuplicates="false" type="DATA_INTERSECTION">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+$out.0.* = $in.0.*;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node dedupKey="param(a)" guiName="Dedup Sensitive Params" guiX="395" guiY="600" id="DEDUP_PARAMS" sorted="false" type="DEDUP"/>
+<Node dedupKey="property(a)" guiName="Dedup URL Props" guiX="370" guiY="450" id="DEDUP_URL" sorted="false" type="DEDUP"/>
+<Node debugOutput="true" guiName="Fail" guiX="2395" guiY="25" id="FAIL" type="FAIL"/>
+<Node debugOutput="true" guiName="Fail" guiX="2395" guiY="175" id="FAIL1" type="FAIL"/>
+<Node debugOutput="true" guiName="Fail" guiX="2395" guiY="425" id="FAIL2" type="FAIL"/>
+<Node debugOutput="true" guiName="Fail" guiX="2395" guiY="575" id="FAIL3" type="FAIL"/>
+<Node debugOutput="true" guiName="FastSort" guiX="1970" guiY="75" id="FAST_SORT" sortKey="lineContent(a);fileURL(a)" type="FAST_SORT"/>
+<Node debugOutput="true" guiName="FastSort" guiX="1970" guiY="200" id="FAST_SORT1" sortKey="lineContent(a);fileURL(a)" type="FAST_SORT"/>
+<Node debugOutput="true" guiName="FastSort" guiX="1970" guiY="525" id="FAST_SORT3" sortKey="rowId(a)" type="FAST_SORT"/>
+<Node debugOutput="true" guiName="FastSort" guiX="1970" guiY="350" id="FAST_SORT4" sortKey="rowId(a)" type="FAST_SORT"/>
+<Node debugInput="true" fileURL="${DATAIN_DIR}/urlRedactionDebugInput.csv" guiName="FlatFileReader" guiX="-255" guiY="225" id="FLAT_FILE_READER" skipRows="0" type="FLAT_FILE_READER"/>
+<Node debugOutput="true" fileURL="${DATAIN_DIR}/urlRedactionDebugOutput.csv" guiName="Lines Test CSV" guiX="1820" guiY="75" id="LINES_TEST_CSV" type="FLAT_FILE_READER"/>
+<Node guiName="Partition by file type" guiX="970" guiY="300" id="PARTITION" type="PARTITION">
+<attr name="partitionSource"><![CDATA[//#CTL2
+// Port 0: XML-format files (grf, sgrf, jbf, rjob, prm)
+// Port 1: cfg files (Java properties format, no XML quoting)
+function integer getOutputPort() {
+	string fileURL = lowerCase($in.0.fileURL);
+	if (endsWith(fileURL, ".cfg")) { return 1; }
+	return 0;
+}
+]]></attr>
+</Node>
+<Node guiName="URL Properties List" guiX="545" guiY="450" id="PROPERTIES_LIST" type="DENORMALIZER">
+<attr name="denormalize"><![CDATA[//#CTL2
+string[] propertiesList;
+function integer append() {
+	if (!startsWith($in.0.property, "##")) { append(propertiesList, $in.0.property); }
+	return OK;
+}
+function integer transform() {
+	$out.0.propertiesList = propertiesList;
+	return OK;
+}
+]]></attr>
+</Node>
+<Node guiName="Redact CFG URL Properties" guiX="1195" guiY="350" id="REDACT_CFG" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// ============================================================
+// URL redaction for .cfg files (Java properties format)
+// Matches:  propertyName=value  (no XML quotes)
+// Value runs to end of line. Same smart redaction logic.
+// Both property list and sensitive query param list are CSV-driven.
+// ============================================================
+
+function string redactQueryParams(string urlVal, string[] sensitiveParams) {
+	integer qPos = indexOf(urlVal, "?");
+	if (qPos < 0) { return urlVal; }
+	string base        = left(urlVal, qPos + 1);
+	string queryString = right(urlVal, length(urlVal) - qPos - 1);
+	// Normalise XML-encoded ampersands so &amp;param=val is treated as a separate param
+	boolean xmlEncoded = contains(queryString, "&amp;");
+	if (xmlEncoded) { queryString = replace(queryString, "&amp;", "&"); }
+	string[] params    = split(queryString, "&");
+	boolean changed    = false;
+	for (integer i = 0; i < length(params); i++) {
+		string param  = params[i];
+		integer eqPos = indexOf(param, "=");
+		if (eqPos < 0) { continue; }
+		string paramName  = lowerCase(left(param, eqPos));
+		string paramValue = right(param, length(param) - eqPos - 1);
+		if (startsWith(paramValue, "${")) { continue; }
+		if (paramValue == "" or paramValue == "REDACTED") { continue; }
+		if (in(paramName, sensitiveParams)) {
+			params[i] = concat(left(param, eqPos + 1), "REDACTED");
+			changed = true;
+			dictionary.status = "REDACTED";
+		}
+	}
+	if (!changed) { return urlVal; }
+	// Reconstruct with the same delimiter that was in the original URL
+	string joinSep;
+	if (xmlEncoded) { joinSep = "&amp;"; } else { joinSep = "&"; }
+	return concat(base, join(joinSep, params));
+}
+
+function string redactAuthority(string urlVal, integer schemeEnd) {
+	integer atPos = indexOf(urlVal, "@");
+	if (atPos <= schemeEnd) { return urlVal; }
+	integer slashPos = indexOf(urlVal, "/", schemeEnd);
+	if (slashPos >= 0 and atPos > slashPos) { return urlVal; }
+	string authority = substring(urlVal, schemeEnd, atPos - schemeEnd);
+	if (contains(authority, "${")) { return urlVal; }
+	dictionary.status = "REDACTED";
+	return concat(left(urlVal, schemeEnd), "REDACTED@", right(urlVal, length(urlVal) - atPos - 1));
+}
+
+function string extractInnerURL(string urlVal) {
+	integer parenOpen  = indexOf(urlVal, "(");
+	integer parenClose = lastIndexOf(urlVal, ")");
+	if (parenOpen < 0 or parenClose <= parenOpen) { return ""; }
+	return substring(urlVal, parenOpen + 1, parenClose - parenOpen - 1);
+}
+
+function string rebuildWrapper(string urlVal, string redactedInner) {
+	integer parenOpen  = indexOf(urlVal, "(");
+	integer parenClose = lastIndexOf(urlVal, ")");
+	return concat(left(urlVal, parenOpen + 1), redactedInner, right(urlVal, length(urlVal) - parenClose));
+}
+
+function string redactURLValue(string urlVal, string[] sensitiveParams) {
+	if (isnull(urlVal) or urlVal == "") { return urlVal; }
+	if (startsWith(urlVal, "${")) { return urlVal; }
+	string lc = lowerCase(urlVal);
+	if (startsWith(lc, "sandbox://")) { return urlVal; }
+	if (startsWith(lc, "dict:"))      { return urlVal; }
+	if (startsWith(lc, "port:"))      { return urlVal; }
+	if (startsWith(lc, "clover://"))  { return urlVal; }
+	if (startsWith(lc, "file:/"))     { return urlVal; }
+	if (startsWith(lc, "hdfs://"))    { return urlVal; }
+	if (contains(lc, ":(proxy://")) {
+		integer proxyOpen  = indexOf(urlVal, "(");
+		integer proxyClose = indexOf(urlVal, ")");
+		if (proxyOpen > 0 and proxyClose > proxyOpen) {
+			string proxyURL  = substring(urlVal, proxyOpen + 1, proxyClose - proxyOpen - 1);
+			string actualURL = right(urlVal, length(urlVal) - proxyClose - 1);
+			if (startsWith(actualURL, "//")) { actualURL = right(actualURL, length(actualURL) - 2); }
+			string redProxy  = proxyURL;
+			if (startsWith(lowerCase(proxyURL), "proxy://")) { redProxy = redactAuthority(proxyURL, 8); }
+			string redActual = actualURL;
+			integer schEnd   = indexOf(actualURL, "://") + 3;
+			// If the actual URL has no scheme (consumed by the outer wrapper), use offset 0
+			// so redactAuthority and redactQueryParams still run against the schemeless URL
+			if (schEnd <= 2) { schEnd = 0; }
+			redActual = redactAuthority(actualURL, schEnd);
+			redActual = redactQueryParams(redActual, sensitiveParams);
+			if (redProxy != proxyURL or redActual != actualURL) {
+				return concat(left(urlVal, proxyOpen + 1), redProxy, ")//", redActual);
+			}
+		}
+		return urlVal;
+	}
+	if (startsWith(lc, "zip:(")) {
+		string inner = extractInnerURL(urlVal);
+		if (inner != "") {
+			string innerLc  = lowerCase(inner);
+			string redInner = inner;
+			integer schEnd  = indexOf(inner, "://") + 3;
+			if (schEnd > 2 and !startsWith(innerLc, "file:/") and !startsWith(innerLc, "sandbox://")) {
+				redInner = redactAuthority(inner, schEnd);
+				redInner = redactQueryParams(redInner, sensitiveParams);
+			}
+			if (startsWith(innerLc, "zip:(")) {
+				string inner2 = extractInnerURL(inner);
+				if (inner2 != "") {
+					integer schEnd2  = indexOf(inner2, "://") + 3;
+					string redInner2 = inner2;
+					if (schEnd2 > 2 and !startsWith(lowerCase(inner2), "file:/")) {
+						redInner2 = redactAuthority(inner2, schEnd2);
+						redInner2 = redactQueryParams(redInner2, sensitiveParams);
+					}
+					if (redInner2 != inner2) { redInner = rebuildWrapper(inner, redInner2); }
+				}
+			}
+			if (redInner != inner) { return rebuildWrapper(urlVal, redInner); }
+		}
+		return urlVal;
+	}
+	if (startsWith(lc, "gzip:(")) {
+		string inner = extractInnerURL(urlVal);
+		if (inner != "") {
+			string innerLc  = lowerCase(inner);
+			integer schEnd  = indexOf(inner, "://") + 3;
+			string redInner = inner;
+			if (schEnd > 2 and !startsWith(innerLc, "file:/") and !startsWith(innerLc, "sandbox://")) {
+				redInner = redactAuthority(inner, schEnd);
+				redInner = redactQueryParams(redInner, sensitiveParams);
+			}
+			if (redInner != inner) { return rebuildWrapper(urlVal, redInner); }
+		}
+		return urlVal;
+	}
+	integer schemeEnd = indexOf(urlVal, "://") + 3;
+	if (startsWith(lc, "ftp://") or startsWith(lc, "ftps://") or startsWith(lc, "sftp://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (startsWith(lc, "http://") or startsWith(lc, "https://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (startsWith(lc, "s3://") or startsWith(lc, "s3a://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (startsWith(lc, "az-blob://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (startsWith(lc, "smb://") or startsWith(lc, "smb2://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		return urlVal;
+	}
+	if (startsWith(lc, "ldap://") or startsWith(lc, "ldaps://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (contains(urlVal, "://") and contains(urlVal, "@")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+	}
+	return urlVal;
+}
+
+function integer transform() {
+	string lineContent         = nvl($in.0.lineContent, "");
+	string originalLineContent = lineContent;
+	string[] sensitiveParams   = $in.0.sensitiveParamsList;
+	// Skip comment lines and blank lines
+	if (startsWith(trim(lineContent), "#") or trim(lineContent) == "") {
+		$out.0.lineContent = lineContent;
+		$out.0.fileURL     = $in.0.fileURL;
+		$out.1.status      = dictionary.status;
+		$out.1.sandbox     = getParamValue("SANDBOX_NAME");
+		$out.1.file_url    = $in.0.fileURL;
+		$out.1.file_name   = getParamValue("FILE_NAME");
+		return ALL;
+	}
+	string[] editedProperties;
+	foreach (string property : $in.0.propertiesList) {
+		// .cfg format: property=value  (value runs to end of line, no quotes)
+		string prefix = concat(property, "=");
+		if (startsWith(lineContent, prefix) and !startsWith(lineContent, concat(property, "=${"))) {
+			// Extract the value — everything after "property="
+			string rawValue = right(lineContent, length(lineContent) - length(prefix));
+			string redacted = redactURLValue(rawValue, sensitiveParams);
+			if (redacted != rawValue) {
+				lineContent = concat(prefix, redacted);
+				if (!in(property, editedProperties)) { append(editedProperties, property); }
+			}
+		}
+	}
+	$out.0.lineContent = lineContent;
+	$out.0.fileURL     = $in.0.fileURL;
+	if (lineContent != originalLineContent) { dictionary.status = "REDACTED"; }
+	$out.1.status    = dictionary.status;
+	$out.1.sandbox   = getParamValue("SANDBOX_NAME");
+	$out.1.file_url  = $in.0.fileURL;
+	$out.1.file_name = getParamValue("FILE_NAME");
+	if (length(editedProperties) > 0) {
+		$out.1.type = "connection";
+		$out.1.redacted_properties = join(",", editedProperties);
+	}
+	if ($out.1.status == "REDACTED") { $out.1.message = "Potentially sensitive data in URL"; }
+	return ALL;
+}
+]]></attr>
+</Node>
+<Node guiName="Redact XML URL Properties" guiX="1195" guiY="200" id="REDACT_XML" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// ============================================================
+// URL redaction for XML-format files (.grf, .sgrf, .jbf, .rjob, .prm)
+// Matches:  propertyName="value"
+// Both property list and sensitive query param list are CSV-driven.
+// ============================================================
+
+function string redactQueryParams(string urlVal, string[] sensitiveParams) {
+	integer qPos = indexOf(urlVal, "?");
+	if (qPos < 0) { return urlVal; }
+	string base        = left(urlVal, qPos + 1);
+	string queryString = right(urlVal, length(urlVal) - qPos - 1);
+	// Normalise XML-encoded ampersands so &amp;param=val is treated as a separate param
+	boolean xmlEncoded = contains(queryString, "&amp;");
+	if (xmlEncoded) { queryString = replace(queryString, "&amp;", "&"); }
+	string[] params    = split(queryString, "&");
+	boolean changed    = false;
+	for (integer i = 0; i < length(params); i++) {
+		string param  = params[i];
+		integer eqPos = indexOf(param, "=");
+		if (eqPos < 0) { continue; }
+		string paramName  = lowerCase(left(param, eqPos));
+		string paramValue = right(param, length(param) - eqPos - 1);
+		if (startsWith(paramValue, "${")) { continue; }
+		if (paramValue == "" or paramValue == "REDACTED") { continue; }
+		if (in(paramName, sensitiveParams)) {
+			params[i] = concat(left(param, eqPos + 1), "REDACTED");
+			changed = true;
+			dictionary.status = "REDACTED";
+		}
+	}
+	if (!changed) { return urlVal; }
+	// Reconstruct with the same delimiter that was in the original URL
+	string joinSep;
+	if (xmlEncoded) { joinSep = "&amp;"; } else { joinSep = "&"; }
+	return concat(base, join(joinSep, params));
+}
+
+function string redactAuthority(string urlVal, integer schemeEnd) {
+	integer atPos = indexOf(urlVal, "@");
+	if (atPos <= schemeEnd) { return urlVal; }
+	integer slashPos = indexOf(urlVal, "/", schemeEnd);
+	if (slashPos >= 0 and atPos > slashPos) { return urlVal; }
+	string authority = substring(urlVal, schemeEnd, atPos - schemeEnd);
+	if (contains(authority, "${")) { return urlVal; }
+	dictionary.status = "REDACTED";
+	return concat(left(urlVal, schemeEnd), "REDACTED@", right(urlVal, length(urlVal) - atPos - 1));
+}
+
+function string extractInnerURL(string urlVal) {
+	integer parenOpen  = indexOf(urlVal, "(");
+	integer parenClose = lastIndexOf(urlVal, ")");
+	if (parenOpen < 0 or parenClose <= parenOpen) { return ""; }
+	return substring(urlVal, parenOpen + 1, parenClose - parenOpen - 1);
+}
+
+function string rebuildWrapper(string urlVal, string redactedInner) {
+	integer parenOpen  = indexOf(urlVal, "(");
+	integer parenClose = lastIndexOf(urlVal, ")");
+	return concat(left(urlVal, parenOpen + 1), redactedInner, right(urlVal, length(urlVal) - parenClose));
+}
+
+function string redactURLValue(string urlVal, string[] sensitiveParams) {
+	if (isnull(urlVal) or urlVal == "") { return urlVal; }
+	if (startsWith(urlVal, "${")) { return urlVal; }
+	string lc = lowerCase(urlVal);
+	if (startsWith(lc, "sandbox://")) { return urlVal; }
+	if (startsWith(lc, "dict:"))      { return urlVal; }
+	if (startsWith(lc, "port:"))      { return urlVal; }
+	if (startsWith(lc, "clover://"))  { return urlVal; }
+	if (startsWith(lc, "file:/"))     { return urlVal; }
+	if (startsWith(lc, "hdfs://"))    { return urlVal; }
+	if (contains(lc, ":(proxy://")) {
+		integer proxyOpen  = indexOf(urlVal, "(");
+		integer proxyClose = indexOf(urlVal, ")");
+		if (proxyOpen > 0 and proxyClose > proxyOpen) {
+			string proxyURL  = substring(urlVal, proxyOpen + 1, proxyClose - proxyOpen - 1);
+			string actualURL = right(urlVal, length(urlVal) - proxyClose - 1);
+			if (startsWith(actualURL, "//")) { actualURL = right(actualURL, length(actualURL) - 2); }
+			string redProxy  = proxyURL;
+			if (startsWith(lowerCase(proxyURL), "proxy://")) { redProxy = redactAuthority(proxyURL, 8); }
+			string redActual = actualURL;
+			integer schEnd   = indexOf(actualURL, "://") + 3;
+			// If the actual URL has no scheme (consumed by the outer wrapper), use offset 0
+			// so redactAuthority and redactQueryParams still run against the schemeless URL
+			if (schEnd <= 2) { schEnd = 0; }
+			redActual = redactAuthority(actualURL, schEnd);
+			redActual = redactQueryParams(redActual, sensitiveParams);
+			if (redProxy != proxyURL or redActual != actualURL) {
+				return concat(left(urlVal, proxyOpen + 1), redProxy, ")//", redActual);
+			}
+		}
+		return urlVal;
+	}
+	if (startsWith(lc, "zip:(")) {
+		string inner = extractInnerURL(urlVal);
+		if (inner != "") {
+			string innerLc  = lowerCase(inner);
+			string redInner = inner;
+			integer schEnd  = indexOf(inner, "://") + 3;
+			if (schEnd > 2 and !startsWith(innerLc, "file:/") and !startsWith(innerLc, "sandbox://")) {
+				redInner = redactAuthority(inner, schEnd);
+				redInner = redactQueryParams(redInner, sensitiveParams);
+			}
+			if (startsWith(innerLc, "zip:(")) {
+				string inner2 = extractInnerURL(inner);
+				if (inner2 != "") {
+					integer schEnd2  = indexOf(inner2, "://") + 3;
+					string redInner2 = inner2;
+					if (schEnd2 > 2 and !startsWith(lowerCase(inner2), "file:/")) {
+						redInner2 = redactAuthority(inner2, schEnd2);
+						redInner2 = redactQueryParams(redInner2, sensitiveParams);
+					}
+					if (redInner2 != inner2) { redInner = rebuildWrapper(inner, redInner2); }
+				}
+			}
+			if (redInner != inner) { return rebuildWrapper(urlVal, redInner); }
+		}
+		return urlVal;
+	}
+	if (startsWith(lc, "gzip:(")) {
+		string inner = extractInnerURL(urlVal);
+		if (inner != "") {
+			string innerLc  = lowerCase(inner);
+			integer schEnd  = indexOf(inner, "://") + 3;
+			string redInner = inner;
+			if (schEnd > 2 and !startsWith(innerLc, "file:/") and !startsWith(innerLc, "sandbox://")) {
+				redInner = redactAuthority(inner, schEnd);
+				redInner = redactQueryParams(redInner, sensitiveParams);
+			}
+			if (redInner != inner) { return rebuildWrapper(urlVal, redInner); }
+		}
+		return urlVal;
+	}
+	integer schemeEnd = indexOf(urlVal, "://") + 3;
+	if (startsWith(lc, "ftp://") or startsWith(lc, "ftps://") or startsWith(lc, "sftp://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (startsWith(lc, "http://") or startsWith(lc, "https://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (startsWith(lc, "s3://") or startsWith(lc, "s3a://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (startsWith(lc, "az-blob://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (startsWith(lc, "smb://") or startsWith(lc, "smb2://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		return urlVal;
+	}
+	if (startsWith(lc, "ldap://") or startsWith(lc, "ldaps://")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+		urlVal = redactQueryParams(urlVal, sensitiveParams);
+		return urlVal;
+	}
+	if (contains(urlVal, "://") and contains(urlVal, "@")) {
+		urlVal = redactAuthority(urlVal, schemeEnd);
+	}
+	return urlVal;
+}
+
+string component;
+string connection;
+boolean isConnection = false;
+boolean isComponent  = false;
+
+function integer transform() {
+	string lineContent         = nvl($in.0.lineContent, "");
+	string originalLineContent = lineContent;
+	string[] sensitiveParams   = $in.0.sensitiveParamsList;
+	if (startsWith(lineContent, "<Connection")) { isConnection = true;  isComponent = false; }
+	if (startsWith(lineContent, "<Node"))       { isConnection = false; isComponent = true;  }
+	if (isConnection and startsWith(lineContent, "<Connection")) {
+		string[] findId = find(lineContent, 'id="[^"]*"');
+		if (length(findId) > 0) { connection = replace(replace(findId[0], "id=", ""), '"', ""); }
+	}
+	if (isComponent and startsWith(lineContent, "<Node ")) {
+		string[] findId = find(lineContent, 'id="[^"]*"');
+		if (length(findId) > 0) { component = replace(replace(findId[0], "id=", ""), '"', ""); }
+	}
+	string[] editedProperties;
+	foreach (string property : $in.0.propertiesList) {
+		string propertyREGEX = concat(property, '="[^"]*"');
+		string[] matches = find(lineContent, propertyREGEX);
+		for (integer i = 0; i < length(matches); i++) {
+			string fullMatch = matches[i];
+			integer eqQuote  = indexOf(fullMatch, '="');
+			if (eqQuote < 0) { continue; }
+			string attrValue = substring(fullMatch, eqQuote + 2, length(fullMatch) - eqQuote - 3);
+			string redacted  = redactURLValue(attrValue, sensitiveParams);
+			if (redacted != attrValue) {
+				integer matchPos = indexOf(lineContent, fullMatch);
+				if (matchPos >= 0) {
+					lineContent = concat(
+						left(lineContent, matchPos),
+						property, '="', redacted, '"',
+						right(lineContent, length(lineContent) - matchPos - length(fullMatch))
+					);
+				}
+				if (!in(property, editedProperties)) { append(editedProperties, property); }
+			}
+		}
+	}
+	$out.0.lineContent = lineContent;
+	$out.0.fileURL     = $in.0.fileURL;
+	if (lineContent != originalLineContent) { dictionary.status = "REDACTED"; }
+	$out.1.status    = dictionary.status;
+	$out.1.sandbox   = getParamValue("SANDBOX_NAME");
+	$out.1.file_url  = $in.0.fileURL;
+	$out.1.file_name = getParamValue("FILE_NAME");
+	if (length(editedProperties) > 0) {
+		if (isConnection) { $out.1.type = "connection"; $out.1.name = connection; }
+		else if (isComponent) { $out.1.type = "component"; $out.1.name = component; }
+		$out.1.redacted_properties = join(",", editedProperties);
+	}
+	if ($out.1.status == "REDACTED") { $out.1.message = "Potentially sensitive data in URL"; }
+	return ALL;
+}
+]]></attr>
+</Node>
+<Node debugOutput="true" fileURL="${DATAIN_DIR}/urlRedactionDebugReportOutput.csv" guiName="Reports Test CSV" guiX="1820" guiY="525" id="REPORTS_TEST_CSV" type="FLAT_FILE_READER"/>
+<Node guiName="Sensitive Params List" guiX="595" guiY="600" id="SENSITIVE_PARAMS_LIST" type="DENORMALIZER">
+<attr name="denormalize"><![CDATA[//#CTL2
+string[] sensitiveParamsList;
+function integer append() {
+	append(sensitiveParamsList, $in.0.param);
+	return OK;
+}
+function integer transform() {
+	$out.0.sensitiveParamsList = sensitiveParamsList;
+	return OK;
+}
+]]></attr>
+</Node>
+<Node fileURL="${DATAIN_DIR}/sensitiveQueryParams.csv" guiName="Sensitive Query Params" guiX="175" guiY="600" id="SENSITIVE_QUERY_PARAMS" type="FLAT_FILE_READER"/>
+<Node guiName="SimpleGather" guiX="1495" guiY="200" id="SIMPLE_GATHER" type="SIMPLE_GATHER"/>
+<Node debugInputMetadata="" guiName="SubgraphInput" guiX="24" guiY="-74" id="SUBGRAPH_INPUT0" type="SUBGRAPH_INPUT">
+<Port guiY="241" name="0"/>
+<Port guiY="316" name="1"/>
+</Node>
+<Node guiName="SubgraphOutput" guiX="1695" guiY="-74" id="SUBGRAPH_OUTPUT0" type="SUBGRAPH_OUTPUT">
+<Port guiY="217" name="0"/>
+<Port guiY="367" name="1"/>
+<Port guiY="541" name="2"/>
+</Node>
+<Node debugOutput="true" guiName="Success" guiX="2545" guiY="125" id="SUCCESS" type="SUCCESS"/>
+<Node debugOutput="true" guiName="Success" guiX="2545" guiY="525" id="SUCCESS1" type="SUCCESS"/>
+<Node fileURL="${DATAIN_DIR}/urlProperties.csv" guiName="URL Properties" guiX="175" guiY="450" id="URL_PROPERTIES" type="FLAT_FILE_READER"/>
+<Edge fromNode="ADD_FIELDS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge25" inPort="Port 0 (in)" metadata="Metadata9" outPort="Port 0 (out)" toNode="FAST_SORT4:0"/>
+<Edge fromNode="CONCATENATE:0" guiBendpoints="" guiRouter="Manhattan" id="Edge34" inPort="Port 1 (in)" outPort="Port 0 (out)" toNode="SUBGRAPH_OUTPUT0:1"/>
+<Edge fromNode="CROSS_JOIN:0" guiBendpoints="" guiRouter="Manhattan" id="Edge4" inPort="Port 0 (in)" metadata="MetadataWithList" outPort="Port 0 (out)" toNode="PARTITION:0"/>
+<Edge fromNode="DATA_INTERSECTION:0" guiBendpoints="" guiRouter="Manhattan" id="Edge21" inPort="Port 0 (in)" outPort="Port 0 (only in A)" toNode="FAIL:0"/>
+<Edge fromNode="DATA_INTERSECTION:1" guiBendpoints="" guiRouter="Manhattan" id="Edge20" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 1 (in A &amp; B)" toNode="SUCCESS:0"/>
+<Edge fromNode="DATA_INTERSECTION:2" guiBendpoints="" guiRouter="Manhattan" id="Edge22" inPort="Port 0 (in)" outPort="Port 2 (only in B)" toNode="FAIL1:0"/>
+<Edge fromNode="DATA_INTERSECTION1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge29" inPort="Port 0 (in)" outPort="Port 0 (only in A)" toNode="FAIL2:0"/>
+<Edge fromNode="DATA_INTERSECTION1:1" guiBendpoints="" guiRouter="Manhattan" id="Edge28" inPort="Port 0 (in)" metadata="Metadata7" outPort="Port 1 (in A &amp; B)" toNode="SUCCESS1:0"/>
+<Edge fromNode="DATA_INTERSECTION1:2" guiBendpoints="" guiRouter="Manhattan" id="Edge30" inPort="Port 0 (in)" outPort="Port 2 (only in B)" toNode="FAIL3:0"/>
+<Edge fromNode="DEDUP_PARAMS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge8" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (unique)" toNode="SENSITIVE_PARAMS_LIST:0"/>
+<Edge fromNode="DEDUP_URL:0" guiBendpoints="" guiRouter="Manhattan" id="Edge2" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (unique)" toNode="PROPERTIES_LIST:0"/>
+<Edge fromNode="FAST_SORT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge23" inPort="Port 0 (set A)" outPort="Port 0 (out)" toNode="DATA_INTERSECTION:0"/>
+<Edge fromNode="FAST_SORT1:0" guiBendpoints="" guiRouter="Manhattan" id="Edge24" inPort="Port 1 (set B)" outPort="Port 0 (out)" toNode="DATA_INTERSECTION:1"/>
+<Edge fromNode="FAST_SORT3:0" guiBendpoints="" guiRouter="Manhattan" id="Edge32" inPort="Port 1 (set B)" outPort="Port 0 (out)" toNode="DATA_INTERSECTION1:1"/>
+<Edge fromNode="FAST_SORT4:0" guiBendpoints="" guiRouter="Manhattan" id="Edge18" inPort="Port 0 (set A)" outPort="Port 0 (out)" toNode="DATA_INTERSECTION1:0"/>
+<Edge fromNode="FLAT_FILE_READER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge16" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (output)" toNode="SUBGRAPH_INPUT0:0"/>
+<Edge fromNode="LINES_TEST_CSV:0" guiBendpoints="" guiRouter="Manhattan" id="Edge17" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (output)" toNode="FAST_SORT:0"/>
+<Edge fromNode="PARTITION:0" guiBendpoints="" guiRouter="Manhattan" id="Edge10" inPort="Port 0 (in)" metadata="MetadataWithList" outPort="Port 0 (out)" toNode="REDACT_XML:0"/>
+<Edge fromNode="PARTITION:1" guiBendpoints="" guiRouter="Manhattan" id="Edge11" inPort="Port 0 (in)" metadata="MetadataWithList" outPort="Port 1 (out)" toNode="REDACT_CFG:0"/>
+<Edge fromNode="PROPERTIES_LIST:0" guiBendpoints="" guiRouter="Manhattan" id="Edge3" inPort="Port 1 (slave)" metadata="Metadata5" outPort="Port 0 (out)" toNode="CROSS_JOIN:1"/>
+<Edge fromNode="REDACT_CFG:0" guiBendpoints="" guiRouter="Manhattan" id="Edge12" inPort="Port 1 (in)" metadata="Metadata3" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:1"/>
+<Edge fromNode="REDACT_CFG:1" guiBendpoints="" guiRouter="Manhattan" id="Edge13" inPort="Port 1 (in)" metadata="Metadata8" outPort="Port 1 (out)" toNode="CONCATENATE:1"/>
+<Edge fromNode="REDACT_XML:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (out)" toNode="SIMPLE_GATHER:0"/>
+<Edge fromNode="REDACT_XML:1" guiBendpoints="" guiRouter="Manhattan" id="Edge6" inPort="Port 0 (in)" metadata="Metadata8" outPort="Port 1 (out)" toNode="CONCATENATE:0"/>
+<Edge fromNode="REPORTS_TEST_CSV:0" guiBendpoints="" guiRouter="Manhattan" id="Edge26" inPort="Port 0 (in)" metadata="Metadata4" outPort="Port 0 (output)" toNode="FAST_SORT3:0"/>
+<Edge fromNode="SENSITIVE_PARAMS_LIST:0" guiBendpoints="" guiRouter="Manhattan" id="Edge9" inPort="Port 2 (slave)" metadata="Metadata6" outPort="Port 0 (out)" toNode="CROSS_JOIN:2"/>
+<Edge fromNode="SENSITIVE_QUERY_PARAMS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge7" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (output)" toNode="DEDUP_PARAMS:0"/>
+<Edge fromNode="SIMPLE_GATHER:0" guiBendpoints="" guiRouter="Manhattan" id="Edge14" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 0 (out)" toNode="SUBGRAPH_OUTPUT0:0"/>
+<Edge fromNode="SUBGRAPH_INPUT0:0" guiBendpoints="" guiRouter="Manhattan" id="Edge0" inPort="Port 0 (master)" metadata="Metadata3" outPort="Port 0 (out)" toNode="CROSS_JOIN:0"/>
+<Edge fromNode="SUBGRAPH_OUTPUT0:0" guiBendpoints="" guiRouter="Manhattan" id="Edge19" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="FAST_SORT1:0"/>
+<Edge fromNode="SUBGRAPH_OUTPUT0:1" guiBendpoints="" guiRouter="Manhattan" id="Edge27" inPort="Port 0 (in)" outPort="Port 1 (out)" toNode="ADD_FIELDS:0"/>
+<Edge fromNode="URL_PROPERTIES:0" guiBendpoints="" guiRouter="Manhattan" id="Edge1" inPort="Port 0 (in)" metadata="Metadata1" outPort="Port 0 (output)" toNode="DEDUP_URL:0"/>
+</Phase>
+</Graph>

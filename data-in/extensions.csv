@@ -1,0 +1,16 @@
+graph|grf
+subgraph|sgrf
+jobflow|jbf
+data service|rjob
+properties|properties
+connection configuration|cfg
+parameter|prm
+metadata|fmt
+CTL transformation|ctl
+custom java|java
+SQL script|sql
+wrangler job|wjob
+wrangler source|wsrc
+wrangler target|wtgt
+project|project
+classpath|classpath

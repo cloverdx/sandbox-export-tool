@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Graph author="NickTaylor" created="Wed Oct 15 08:54:09 CEST 2025" guiVersion="7.3.1.25" id="1760520121684" licenseCode="CLCDSCLOVE24765514SP" name="sanitizeFile" showComponentDetails="true">
+<Global>
+<Metadata fileURL="${META_DIR}/sanitizationReport.fmt" id="Metadata8"/>
+<Metadata id="Metadata3">
+<Record fieldDelimiter="|" name="fileContent" recordDelimiter="\r\n" type="delimited">
+<Field name="lineContent" type="string"/>
+<Field name="fileURL" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata10">
+<Record eofAsDelimiter="true" fieldDelimiter="ThereOnceWasABoyCalledEustaceClarenceScrubb" name="parseFile" previewAttachmentCharset="UTF-8" type="fixed">
+<Field name="lineContent" size="2048" type="byte"/>
+<Field name="fileURL" size="10000" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata1">
+<Record fieldDelimiter="\r\n\\|\n\\|\r\\|\n\r" name="properties" previewAttachment="${DATAIN_DIR}/sanitizeProperties.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" skipSourceRows="0" type="delimited">
+<Field name="property" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata5">
+<Record fieldDelimiter="|" name="propertiesList" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field containerType="list" name="propertiesList" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata0">
+<Record fieldDelimiter="|" name="recordName1" recordDelimiter="\r\n" type="delimited">
+<Field name="lineContent" type="byte"/>
+<Field name="fileURL" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata4">
+<Record eofAsDelimiter="true" fieldDelimiter="|" name="sanitizedFile" previewAttachmentCharset="UTF-8" recordDelimiter="\r\n" type="delimited">
+<Field delimiter="|" name="fileContent" type="string"/>
+<Field delimiter="\r\n" name="fileURL" type="string"/>
+</Record>
+</Metadata>
+<Metadata id="Metadata2">
+<Record eofAsDelimiter="true" name="stream" previewAttachmentCharset="UTF-8" type="fixed">
+<Field name="lineContent" size="2048" type="byte"/>
+<Field auto_filling="source_name" name="fileURL" size="2048" type="string"/>
+</Record>
+</Metadata>
+<GraphParameters>
+<GraphParameterFile fileURL="workspace.prm"/>
+<GraphParameter name="SANDBOX_PATH" public="true" required="true"/>
+<GraphParameter name="SANDBOX_NAME" public="true">
+<attr name="dynamicValue"><![CDATA[//#CTL2
+
+function string getValue() {
+	string sandbox = getParamValue("SANDBOX_PATH");
+	
+	// Remove final "/"
+	if (endsWith(sandbox,"/")) {sandbox = left(sandbox,(length(sandbox)-1));}
+	
+	//Isolate only the sandbox name from the path
+	integer sandboxIndex = 1 + lastIndexOf(sandbox,"/");
+	sandbox = right(sandbox,length(sandbox)-sandboxIndex);
+	
+	
+	return sandbox;
+}
+]]></attr>
+</GraphParameter>
+<GraphParameter category="advanced" name="FILE_URL" public="true">
+<SingleType multiple="true" name="file" selectionMode="file_or_directory"/>
+</GraphParameter>
+<GraphParameter name="FILE_NAME" public="true"/>
+<GraphParameter name="FILE_TYPE_PORT" public="true" value="2"/>
+</GraphParameters>
+<RichTextNote backgroundColor="9B59B6" folded="false" fontSize="large" height="276" id="Note2" textColor="FFFFFF" width="501" x="175" y="425">
+<attr name="text"><![CDATA[h3. Write Exported files to "Exported.zip" in data-tmp
+]]></attr>
+</RichTextNote>
+<RichTextNote backgroundColor="FFB9B9" folded="false" fontSize="large" height="225" id="Note8" textColor="000000" width="901" x="-350" y="175">
+<attr name="text"><![CDATA[
+h1. This graph is meant to run as a child graph from RUN_ME.grf. It's not meant to run on it's own
+]]></attr>
+</RichTextNote>
+<Dictionary>
+<Entry input="true" name="connectionName" output="true" type="string"/>
+<Entry input="true" name="fileURL" output="true" type="string"/>
+<Entry dictval.value="UNREDACTED" input="true" name="status" output="true" type="string"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node guiName="add # to help earlier Clover versions" guiX="195" guiY="525" id="ADD_TO_HELP_EARLIER_CLOVER_VERSIONS" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	$out.0.lineContent = $in.0.lineContent;
+	$out.0.fileURL = "#"+$in.0.fileURL;
+
+	return ALL;
+}
+
+// Called during component initialization.
+// function boolean init() {}
+
+// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
+// required by the transform. All resources allocated within this method should be released
+// by the postExecute() method.
+// function void preExecute() {}
+
+// Called only if transform() throws an exception.
+// function integer transformOnError(string errorMessage, string stackTrace) {}
+
+// Called during each graph run after the entire transform was executed. Should be used to free any resources
+// allocated within the preExecute() method.
+// function void postExecute() {}
+
+// Called to return a user-defined error message when an error occurs.
+// function string getMessage() {}
+]]></attr>
+</Node>
+<Node dataPolicy="controlled" fileURL="${FILE_URL}" guiName="read file content" guiX="-355" guiY="525" id="READ_FILE_CONTENT" type="FLAT_FILE_READER" verbose="true"/>
+<Node guiName="reformat fileURL" guiX="-5" guiY="525" id="REFORMAT_FILE_URL" type="REFORMAT">
+<attr name="transform"><![CDATA[//#CTL2
+
+// Transforms input record into output record.
+function integer transform() {
+	//fileContent to Sanitized.zip
+	$out.0.lineContent = $in.0.lineContent;
+	
+	//fileURL to Sanitized.zip and dictionary output
+	string url = replace(getParamValue("FILE_URL"),"\\\\","/");
+	string[] urlList = split(url,getParamValue("SANDBOX_NAME")+ "/");
+	dictionary.fileURL = concat(getParamValue("SANDBOX_NAME"), "/", urlList[length(urlList)-1]);
+	$out.0.fileURL = dictionary.fileURL;
+	
+	return ALL;
+}
+]]></attr>
+</Node>
+<Node excludeFields="fileURL" fileURL="zip:(${DATATMP_DIR}/Exported.zip)#" guiName="write sanitized files" guiX="495" guiY="525" id="WRITE_SANITIZED_FILES" makeDirs="true" outputFieldNames="false" partitionFileTag="keyNameFileTag" partitionKey="fileURL" type="FLAT_FILE_WRITER"/>
+<Edge fromNode="ADD_TO_HELP_EARLIER_CLOVER_VERSIONS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge35" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (out)" toNode="WRITE_SANITIZED_FILES:0"/>
+<Edge fromNode="READ_FILE_CONTENT:0" guiBendpoints="" guiRouter="Manhattan" id="Edge5" inPort="Port 0 (in)" metadata="Metadata2" outPort="Port 0 (output)" toNode="REFORMAT_FILE_URL:0"/>
+<Edge fromNode="REFORMAT_FILE_URL:0" guiBendpoints="" guiRouter="Manhattan" id="Edge41" inPort="Port 0 (in)" outPort="Port 0 (out)" toNode="ADD_TO_HELP_EARLIER_CLOVER_VERSIONS:0"/>
+</Phase>
+</Graph>

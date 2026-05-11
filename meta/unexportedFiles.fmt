@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Record fieldDelimiter="|" name="unexportedFiles" previewAttachment="${DATATMP_DIR}/unexportedFiles.csv" previewAttachmentCharset="UTF-8" quoteChar="both" quotedStrings="false" recordDelimiter="\r\n" skipSourceRows="0" type="delimited">
+<Field name="sandbox" type="string"/>
+<Field name="fileURL" type="string"/>
+<Field name="fileName" type="string"/>
+<Field eofAsDelimiter="true" name="fileSize" type="long"/>
+</Record>
