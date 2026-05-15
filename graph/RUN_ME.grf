@@ -25,7 +25,7 @@
 </Record>
 </Metadata>
 <GraphParameters>
-<GraphParameter defaultHint="sandbox names, comma delimited" name="INCLUDE" public="true" required="true">
+<GraphParameter defaultHint="sandbox names, comma delimited" name="INCLUDE" public="true" required="true" value="Project1">
 <attr name="description"><![CDATA[The list of ONLY the sandboxes you wish to include, separated by commas.
 Leave blank to default to all sandboxes and use EXCLUDE to remove specific ones. ]]></attr>
 </GraphParameter>
@@ -177,11 +177,6 @@ h3. The output will be a zip file in the data-out folder called "SandboxExport_{
 <RichTextNote backgroundColor="FAF6D6" folded="false" fontSize="medium" height="250" id="Note10" textColor="444444" width="377" x="1475" y="500">
 <attr name="text"><![CDATA[h3. Which graph to run is dynamically enabled/disabled based on REDACTED_MODE parameter]]></attr>
 </RichTextNote>
-<RichTextNote backgroundColor="FAF6D6" folded="false" fontSize="medium" height="250" id="Note11" textColor="444444" width="400" x="3125" y="600">
-<attr name="text"><![CDATA[h3. ${DATAOUT_DIR}/SandboxExport_${TIMESTAMP}.zip
-
-not sure how to make the data service output work with timestamp - ask Petr on Monday]]></attr>
-</RichTextNote>
 <Dictionary>
 <Entry contentType="string" input="true" name="INCLUDE" output="true" type="list"/>
 <Entry contentType="string" input="true" name="EXCLUDE" output="true" type="list"/>
@@ -241,35 +236,6 @@ function integer transform() {
 
 	return ALL;
 }]]></attr>
-</Node>
-<Node guiName="SetJobOutput" guiX="3345" guiY="725" id="SET_JOB_OUTPUT1" type="SET_JOB_OUTPUT">
-<attr name="mapping"><![CDATA[//#CTL2
-
-// Transforms input record into output record.
-function integer transform() {
-	$out.0.OUTPUT = "${DATAOUT_DIR}/SandboxExport_" + getParamValue("TIMESTAMP") + ".zip";
-
-	return ALL;
-}
-
-// Called during component initialization.
-// function boolean init() {}
-
-// Called during each graph run before the transform is executed. May be used to allocate and initialize resources
-// required by the transform. All resources allocated within this method should be released
-// by the postExecute() method.
-// function void preExecute() {}
-
-// Called only if transform() throws an exception.
-// function integer transformOnError(string errorMessage, string stackTrace) {}
-
-// Called during each graph run after the entire transform was executed. Should be used to free any resources
-// allocated within the preExecute() method.
-// function void postExecute() {}
-
-// Called to return a user-defined error message when an error occurs.
-// function string getMessage() {}
-]]></attr>
 </Node>
 <Edge fromNode="CREATE_HEADERS:0" guiBendpoints="" guiRouter="Manhattan" id="Edge13" inPort="Port 0 (in)" metadata="Metadata0" outPort="Port 0 (out)" toNode="SANITIZATION_REPORT_HEADERS:0"/>
 <Edge fromNode="CREATE_HEADERS:1" guiBendpoints="" guiRouter="Manhattan" id="Edge24" inPort="Port 0 (in)" metadata="Metadata3" outPort="Port 1 (out)" toNode="FLAT_FILE_WRITER1:0"/>
