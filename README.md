@@ -27,7 +27,7 @@ It exports sandboxes with the option to remove sensitive data, ensuring complian
 
 ## Technical Details
 - **Target:** CloverDX Server 5.0+  
-- **Output:** `Sanitized_[timestamp].zip` + sanitization report (CSV/XLSX)  
+- **Output:** `SandboxExport_[timestamp].zip` + sanitization report (CSV/XLSX)  
 - **Supported Files:** `.grf`, `.sgrf`, `.jbf`, `.rjob`, `.wjob`, `.properties`, `.cfg`, `.prm`, `.fmt`, `.ctl`, `.java`, `.sql`
 
 ---
